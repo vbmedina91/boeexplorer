@@ -1,0 +1,45 @@
+# Datos generados (no subir al repo)
+api/data/boe/
+api/data/bdns/
+api/data/borme/
+api/data/meta.json
+api/data/*.log
+api/cache/
+
+# Backend legacy (Python) - superseded by PHP
+backend/
+
+# Archivos de test y temporales
+test_*.php
+backfill.php
+/tmp/
+*.zip
+*.log
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Configuración de servidor (no compartir)
+.htaccess
+
+# Screenshot (puede ser grande)
+screen.png
+
+# Mantener la estructura de directorios
+!api/data/.gitkeep
+!api/cache/.gitkeep

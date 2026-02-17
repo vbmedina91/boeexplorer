@@ -1,0 +1,3001 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BOE Explorer - Analytics Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#1978e5",
+        "secondary-navy": "#0033A0",
+        "accent-yellow": "#FFB81C",
+        "background-light": "#f6f7f8",
+        "background-dark": "#111821",
+        "surface-dark": "#1a1c21",
+        "border-dark": "#2d3038"
+      },
+      fontFamily: { display: ["Inter", "sans-serif"] },
+      borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" }
+    }
+  }
+};
+</script>
+<style>
+body { font-family: 'Inter', sans-serif; }
+.material-symbols-outlined { font-size: 20px; vertical-align: middle; }
+.glass-card {
+  background: rgba(26, 28, 33, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tab-active { color: #1978e5; border-bottom: 2px solid #1978e5; }
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+.skeleton { background: linear-gradient(90deg, #1a1c21 25%, #2d3038 50%, #1a1c21 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #111821; }
+::-webkit-scrollbar-thumb { background: #2d3038; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3d4048; }
+.chart-container { position: relative; width: 100%; }
+.tooltip-ref { position: absolute; background: #1a1c21; border: 1px solid #2d3038; border-radius: 8px; padding: 12px; z-index: 100; pointer-events: none; max-width: 320px; }
+/* Mobile overflow prevention */
+@media (max-width: 640px) {
+  .grid > div { min-width: 0; }
+  table { font-size: 0.75rem; }
+  table th, table td { padding: 0.5rem 0.375rem; }
+}
+</style>
+<!-- Matomo -->
+<script>
+  var _paq = window._paq = window._paq || [];
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="//stats.pro-eurtec.com/matomo/";
+    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    _paq.push(['setSiteId', '10']);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Matomo Code -->
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+
+<!-- Fixed Top Navbar -->
+<nav class="fixed top-0 z-50 w-full border-b border-slate-200 dark:border-border-dark bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16 items-center">
+      <div class="flex items-center gap-2">
+        <div class="flex items-center justify-center bg-primary rounded-lg p-1.5">
+          <span class="material-symbols-outlined text-white">flag</span>
+        </div>
+        <span class="text-xl font-extrabold tracking-tight dark:text-white uppercase">BOE <span class="text-primary">Explorer</span></span>
+      </div>
+      <div class="hidden md:flex items-center gap-1" id="nav-tabs">
+        <button onclick="navigateTo('inicio')" data-tab="inicio" class="nav-tab px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-primary bg-primary/10">Inicio</button>
+        <button onclick="navigateTo('dashboard')" data-tab="dashboard" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Dashboard</button>
+        <button onclick="navigateTo('licitaciones')" data-tab="licitaciones" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Licitaciones</button>
+        <button onclick="navigateTo('leyes')" data-tab="leyes" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Leyes</button>
+        <button onclick="navigateTo('busqueda')" data-tab="busqueda" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Búsqueda Avanzada</button>
+        <button onclick="navigateTo('referencias')" data-tab="referencias" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Ref. Cruzadas</button>
+        <button onclick="navigateTo('subvenciones')" data-tab="subvenciones" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Subvenciones</button>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" id="theme-toggle">
+          <span class="material-symbols-outlined" id="theme-icon">light_mode</span>
+        </button>
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-surface-dark rounded-full border border-slate-200 dark:border-border-dark">
+          <span class="size-2 rounded-full pulse-dot" id="status-dot" style="background:#10b981"></span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="status-text">Conectando...</span>
+        </div>
+        <!-- Mobile menu -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg bg-slate-100 dark:bg-surface-dark">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="fixed inset-0 z-40 bg-black/50 hidden">
+  <div class="absolute right-0 top-0 h-full w-64 bg-white dark:bg-surface-dark border-l border-slate-200 dark:border-border-dark p-6 pt-20">
+    <button onclick="toggleMobileMenu()" class="absolute top-4 right-4 p-2"><span class="material-symbols-outlined">close</span></button>
+    <div class="flex flex-col gap-2">
+      <button onclick="navigateTo('inicio');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Inicio</button>
+      <button onclick="navigateTo('dashboard');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Dashboard</button>
+      <button onclick="navigateTo('licitaciones');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Licitaciones</button>
+      <button onclick="navigateTo('leyes');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Leyes</button>
+      <button onclick="navigateTo('busqueda');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Búsqueda Avanzada</button>
+      <button onclick="navigateTo('referencias');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Ref. Cruzadas</button>
+      <button onclick="navigateTo('subvenciones');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Subvenciones</button>
+    </div>
+  </div>
+</div>
+
+<main class="pt-24 pb-12 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8" id="main-content">
+  <!-- Content injected by JS -->
+</main>
+
+<!-- Footer -->
+<footer class="mt-12 border-t border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark">
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div class="col-span-1 md:col-span-2">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="flex items-center justify-center bg-primary rounded p-1">
+            <span class="material-symbols-outlined text-white !text-sm">flag</span>
+          </div>
+          <span class="text-lg font-extrabold tracking-tight dark:text-white uppercase">BOE <span class="text-primary">Explorer</span></span>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6">
+          Plataforma independiente de análisis y visualización de datos del BOE y la Plataforma de Contratación del Estado. Datos reales vía APIs oficiales.
+        </p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-6">Fuentes de Datos</h4>
+        <ul class="space-y-4">
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.boe.es/datosabiertos/" target="_blank">BOE Datos Abiertos</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://contrataciondelestado.es" target="_blank">Contratación del Estado</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.pap.hacienda.gob.es/bdnstrans/" target="_blank">BDNS Subvenciones</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.boe.es" target="_blank">BOE Oficial</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-6">Legal</h4>
+        <ul class="space-y-4">
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors cursor-pointer" onclick="navigateTo('aviso-legal')">Aviso Legal</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors cursor-pointer" onclick="navigateTo('privacidad')">Privacidad</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors cursor-pointer" onclick="navigateTo('atribucion')">Atribución de datos</a></li>
+        </ul>
+      </div>
+      <!-- Buy Me a Coffee footer -->
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-6">Apóyanos</h4>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Este proyecto es gratuito y de código abierto. Si te resulta útil, invítanos a un café para mantenerlo vivo.</p>
+        <a href="https://buymeacoffee.com/vbmedina91" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-[#FFDD00] hover:bg-[#FFE44D] text-slate-900 px-4 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-sm">
+          <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="" class="h-5 w-5">
+          Buy me a coffee
+        </a>
+      </div>
+    </div>
+    <div class="mt-12 pt-8 border-t border-slate-100 dark:border-border-dark flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-xs text-slate-500">© 2026 BOE Explorer. Proyecto de análisis de datos públicos.</p>
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-background-dark rounded-full border border-slate-200 dark:border-border-dark">
+        <span class="size-2 bg-emerald-500 rounded-full pulse-dot"></span>
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actualización diaria 20:00 • v3.0.0</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Buy Me a Coffee Floating Button -->
+<a href="https://buymeacoffee.com/vbmedina91" target="_blank" rel="noopener" class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#FFDD00] hover:bg-[#FFE44D] text-slate-900 px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all group" title="Apóyanos con un café">
+  <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="" class="h-5 w-5">
+  <span class="text-sm font-bold hidden sm:inline group-hover:inline">Invítanos un café</span>
+</a>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// BOE Explorer — Frontend Application
+// ══════════════════════════════════════════════════════════════
+
+const API_BASE = window.location.origin + '/api/index.php';
+let dashboardData = null;
+let documentosData = null;
+let licitacionesData = null;
+let referenciasData = null;
+let currentPage = 'inicio';
+let chartInstances = {};
+
+// ─── API CALLS ───────────────────────────────────────────────
+
+async function api(action, params = {}) {
+  const url = new URL(API_BASE);
+  url.searchParams.set('action', action.replace(/^\//, ''));
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== '' && v !== null && v !== undefined) url.searchParams.set(k, v);
+  });
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.error(`API error [${action}]:`, e);
+    return null;
+  }
+}
+
+async function loadDashboard() {
+  dashboardData = await api('dashboard');
+  return dashboardData;
+}
+
+async function loadDocumentos(params = {}) {
+  documentosData = await api('documentos', params);
+  return documentosData;
+}
+
+async function loadLicitaciones(params = {}) {
+  licitacionesData = await api('licitaciones', params);
+  return licitacionesData;
+}
+
+async function loadResumenGasto(periodo = 'diario') {
+  return await api('resumen-gasto', { periodo });
+}
+
+async function loadAnalisisEmpresas(dias = 90) {
+  return await api('analisis-empresas', { dias });
+}
+
+async function loadReferencias(params = {}) {
+  referenciasData = await api('referencias', params);
+  return referenciasData;
+}
+
+async function loadAnalisisTematico() {
+  return await api('analisis-tematico');
+}
+
+async function loadGrafo(params = {}) {
+  return await api('grafo', params);
+}
+
+async function checkStatus() {
+  const data = await api('status');
+  if (data) {
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    dot.style.background = '#10b981';
+    text.textContent = `${formatNumber(data.total_documentos)} docs · ${data.total_dias_almacenados} días`;
+  }
+  return data;
+}
+
+// ─── THEME ───────────────────────────────────────────────────
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const icon = document.getElementById('theme-icon');
+  if (html.classList.contains('dark')) {
+    html.classList.remove('dark');
+    icon.textContent = 'dark_mode';
+    localStorage.setItem('theme', 'light');
+  } else {
+    html.classList.add('dark');
+    icon.textContent = 'light_mode';
+    localStorage.setItem('theme', 'dark');
+  }
+  // Rebuild charts with new theme
+  setTimeout(() => navigateTo(currentPage), 100);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  const icon = document.getElementById('theme-icon');
+  if (saved === 'light') {
+    document.documentElement.classList.remove('dark');
+    icon.textContent = 'dark_mode';
+  } else {
+    document.documentElement.classList.add('dark');
+    icon.textContent = 'light_mode';
+  }
+}
+
+function toggleMobileMenu() {
+  document.getElementById('mobile-menu').classList.toggle('hidden');
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+
+function formatNumber(n) {
+  if (n === null || n === undefined) return '—';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return n.toLocaleString('es-ES');
+}
+
+function formatCurrency(n) {
+  if (n === null || n === undefined) return '—';
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  try {
+    const parts = d.split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  } catch { return d; }
+}
+
+function _buildYearOptions() {
+  const currentYear = new Date().getFullYear();
+  let html = '';
+  for (let y = currentYear; y >= 2024; y--) {
+    html += `<option value="${y}">${y}</option>`;
+  }
+  return html;
+}
+
+function _buildMonthOptions() {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return meses.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+}
+
+function _yearMonthToDateRange(yearId, monthId) {
+  const year = document.getElementById(yearId)?.value || '';
+  const month = document.getElementById(monthId)?.value || '';
+  if (!year && !month) return {};
+  const y = year ? parseInt(year) : new Date().getFullYear();
+  if (month) {
+    const m = parseInt(month);
+    const desde = `${y}-${String(m).padStart(2,'0')}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const hasta = `${y}-${String(m).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+    return { fecha_desde: desde, fecha_hasta: hasta };
+  } else {
+    return { fecha_desde: `${y}-01-01`, fecha_hasta: `${y}-12-31` };
+  }
+}
+
+function tipoBadgeClass(tipo) {
+  const map = {
+    'Ley': 'bg-primary/10 text-primary',
+    'Ley Orgánica': 'bg-primary/10 text-primary',
+    'Real Decreto': 'bg-purple-500/10 text-purple-400',
+    'Real Decreto-ley': 'bg-purple-500/10 text-purple-400',
+    'Decreto': 'bg-accent-yellow/10 text-amber-500',
+    'Orden': 'bg-teal-500/10 text-teal-400',
+    'Resolución': 'bg-sky-500/10 text-sky-400',
+    'Licitación': 'bg-secondary-navy/10 text-blue-400',
+    'Adjudicación': 'bg-emerald-500/10 text-emerald-400',
+    'Anuncio': 'bg-slate-500/10 text-slate-400',
+    'Convenio': 'bg-indigo-500/10 text-indigo-400',
+    'Sentencia': 'bg-red-500/10 text-red-400',
+    'Corrección de errores': 'bg-orange-500/10 text-orange-400',
+  };
+  return map[tipo] || 'bg-slate-500/10 text-slate-400';
+}
+
+function truncate(str, len = 80) {
+  if (!str) return '';
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+function isDark() {
+  return document.documentElement.classList.contains('dark');
+}
+
+function chartColors() {
+  return isDark()
+    ? { text: '#94a3b8', grid: '#2d3038', bg: '#1a1c21' }
+    : { text: '#64748b', grid: '#e2e8f0', bg: '#ffffff' };
+}
+
+function destroyCharts() {
+  Object.values(chartInstances).forEach(c => { try { c.destroy(); } catch {} });
+  chartInstances = {};
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────
+
+function navigateTo(page) {
+  currentPage = page;
+  destroyCharts();
+  
+  // Update nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.dataset.tab === page) {
+      t.className = 'nav-tab px-4 py-2 text-sm font-semibold rounded-lg transition-colors text-primary bg-primary/10';
+    } else {
+      t.className = 'nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors';
+    }
+  });
+
+  const main = document.getElementById('main-content');
+  
+  switch (page) {
+    case 'inicio': renderInicio(main); break;
+    case 'dashboard': renderDashboard(main); break;
+    case 'licitaciones': renderLicitaciones(main); break;
+    case 'leyes': renderLeyes(main); break;
+    case 'busqueda': renderBusqueda(main); break;
+    case 'referencias': renderReferencias(main); break;
+    case 'subvenciones': renderSubvenciones(main); break;
+    case 'aviso-legal': renderAvisoLegal(main); break;
+    case 'privacidad': renderPrivacidad(main); break;
+    case 'atribucion': renderAtribucion(main); break;
+    default: renderInicio(main);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── PAGE: INICIO ────────────────────────────────────────────
+
+async function renderInicio(container) {
+  container.innerHTML = `
+    <!-- Hero -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-accent-yellow/5 to-white dark:to-background-dark border border-slate-200 dark:border-border-dark mb-10">
+      <div class="px-8 py-12 md:px-12 md:py-16 flex flex-col lg:flex-row justify-between items-center gap-12">
+        <div class="max-w-2xl text-center lg:text-left">
+          <span class="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest rounded-full mb-4">Datos Actualizados Diariamente a las 20:00</span>
+          <h1 class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-6 tracking-tight">
+            Explora el <span class="text-primary">BOE</span> y la <span class="text-secondary-navy dark:text-blue-400">Contratación Pública</span>
+          </h1>
+          <p class="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-xl">
+            Monitorización avanzada, cruce de datos inteligente, análisis de tendencias y búsqueda profunda del Boletín Oficial del Estado y la Plataforma de Contratación.
+          </p>
+          <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+            <button onclick="navigateTo('dashboard')" class="bg-slate-900 dark:bg-white text-white dark:text-background-dark px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-opacity">
+              Ver Dashboard <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+            <button onclick="navigateTo('busqueda')" class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <span class="material-symbols-outlined">search</span> Búsqueda Avanzada
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-4 w-full lg:w-auto" id="hero-stats">
+          <div class="flex-1 lg:w-48 p-6 rounded-2xl glass-card border-l-4 border-primary shadow-xl">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Publicaciones Hoy</p>
+            <div class="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight" id="stat-pubs-hoy">—</div>
+            <div class="flex items-center gap-1 text-xs font-bold" id="stat-pubs-var">
+              <span class="material-symbols-outlined !text-sm">trending_flat</span> Cargando...
+            </div>
+          </div>
+          <div class="flex-1 lg:w-48 p-6 rounded-2xl glass-card border-l-4 border-secondary-navy shadow-xl">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Licitaciones Activas</p>
+            <div class="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight" id="stat-lics">—</div>
+            <div class="flex items-center gap-1 text-emerald-500 text-xs font-bold" id="stat-lics-info">
+              <span class="material-symbols-outlined !text-sm">trending_flat</span> Cargando...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Chart + Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div class="col-span-1 md:col-span-2 p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <div><h3 class="font-bold text-slate-900 dark:text-white">Tendencia de Publicaciones</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-medium tracking-wider">Últimos 30 días</p></div>
+          <span class="material-symbols-outlined text-slate-400">show_chart</span>
+        </div>
+        <div class="chart-container" style="height:200px"><canvas id="chart-trend"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <div><h3 class="font-bold text-slate-900 dark:text-white">Ministerios Top</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-medium tracking-wider">Por volumen</p></div>
+          <span class="material-symbols-outlined text-slate-400">bar_chart</span>
+        </div>
+        <div id="top-deptos-bars" class="space-y-3"></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <div><h3 class="font-bold text-slate-900 dark:text-white">Secciones BOE</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-medium tracking-wider">Distribución</p></div>
+          <span class="material-symbols-outlined text-slate-400">pie_chart</span>
+        </div>
+        <div class="chart-container flex flex-col items-center" style="height:200px">
+          <canvas id="chart-sections" style="max-height:160px"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Publications Table -->
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark flex flex-wrap items-end gap-4">
+      <div class="flex-1 min-w-[240px]">
+        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Búsqueda rápida</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input id="quick-search" onkeydown="if(event.key==='Enter')quickSearch()" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm focus:ring-primary focus:border-primary" placeholder="Buscar por título, departamento o referencia..." type="text"/>
+        </div>
+      </div>
+      <button onclick="quickSearch()" class="bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+        <span class="material-symbols-outlined">search</span> Buscar
+      </button>
+      <button onclick="navigateTo('busqueda')" class="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+        <span class="material-symbols-outlined">tune</span> Avanzada
+      </button>
+    </div>
+
+    <div id="recent-table-container"></div>
+  `;
+
+  // Load data
+  const data = await loadDashboard();
+  if (!data) {
+    container.querySelector('#stat-pubs-hoy').textContent = '—';
+    return;
+  }
+
+  // Update hero stats
+  document.getElementById('stat-pubs-hoy').textContent = data.publicaciones_hoy || 0;
+  const varEl = document.getElementById('stat-pubs-var');
+  const v = data.variacion_publicaciones || 0;
+  varEl.className = `flex items-center gap-1 text-xs font-bold ${v >= 0 ? 'text-emerald-500' : 'text-red-400'}`;
+  varEl.innerHTML = `<span class="material-symbols-outlined !text-sm">${v >= 0 ? 'trending_up' : 'trending_down'}</span> ${v >= 0 ? '+' : ''}${v}% vs ayer`;
+
+  document.getElementById('stat-lics').textContent = data.licitaciones_activas || 0;
+  const licsInfoEl = document.getElementById('stat-lics-info');
+  if (data.datos_desde && data.datos_hasta) {
+    licsInfoEl.innerHTML = `<span class="material-symbols-outlined !text-sm">date_range</span> Datos: ${data.datos_desde.substring(0,7)} → hoy`;
+  } else {
+    licsInfoEl.innerHTML = `<span class="material-symbols-outlined !text-sm">schedule</span> Actualización diaria 20:00`;
+  }
+
+  // Trend chart
+  if (data.tendencia_30_dias && data.tendencia_30_dias.length) {
+    const c = chartColors();
+    chartInstances.trend = new Chart(document.getElementById('chart-trend'), {
+      type: 'line',
+      data: {
+        labels: data.tendencia_30_dias.map(d => d.dia),
+        datasets: [{
+          label: 'Publicaciones',
+          data: data.tendencia_30_dias.map(d => d.total),
+          borderColor: '#1978e5',
+          backgroundColor: 'rgba(25,120,229,0.1)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 1,
+          pointHoverRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: c.text, maxTicksLimit: 8, font: { size: 10 } }, grid: { color: c.grid, drawBorder: false } },
+          y: { ticks: { color: c.text, font: { size: 10 } }, grid: { color: c.grid, drawBorder: false }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Top departments bars
+  const deptContainer = document.getElementById('top-deptos-bars');
+  if (data.top_departamentos && data.top_departamentos.length) {
+    const maxVal = data.top_departamentos[0].total;
+    deptContainer.innerHTML = data.top_departamentos.slice(0, 5).map(d => {
+      const pct = Math.round((d.total / maxVal) * 100);
+      return `<div class="space-y-1">
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-slate-600 dark:text-slate-300 truncate max-w-[120px]" title="${d.nombre}">${truncate(d.nombre, 20)}</span>
+          <span class="text-primary">${d.total}</span>
+        </div>
+        <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div class="bg-primary h-full rounded-full transition-all duration-500" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Sections donut
+  if (data.distribucion_secciones) {
+    const labels = Object.keys(data.distribucion_secciones);
+    const values = Object.values(data.distribucion_secciones);
+    const colors = ['#1978e5', '#0033A0', '#FFB81C', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+    chartInstances.sections = new Chart(document.getElementById('chart-sections'), {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: chartColors().text, font: { size: 9, weight: 'bold' }, padding: 8, usePointStyle: true, pointStyle: 'circle' } }
+        }
+      }
+    });
+  }
+
+  // Recent docs table
+  await renderDocumentosTable('recent-table-container', { por_pagina: 15 });
+}
+
+// ─── PAGE: DASHBOARD ─────────────────────────────────────────
+
+async function renderDashboard(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Dashboard Analítico</h2>
+      <p class="text-sm text-slate-500">Visión general de todos los datos recopilados del BOE y la Plataforma de Contratación</p>
+    </div>
+
+    <!-- KPI Cards Row 1: Summary -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4" id="kpi-cards">
+      <div class="p-4 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-primary/10"><span class="material-symbols-outlined text-primary text-lg">description</span></div>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight">Total Documentos</span>
+        </div>
+        <div class="text-xl lg:text-2xl font-black dark:text-white" id="kpi-docs">—</div>
+      </div>
+      <div class="p-4 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-emerald-500/10"><span class="material-symbols-outlined text-emerald-500 text-lg">gavel</span></div>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight">Licitaciones (30d)</span>
+        </div>
+        <div class="text-xl lg:text-2xl font-black dark:text-white" id="kpi-lics">—</div>
+      </div>
+      <div class="p-4 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-accent-yellow/10"><span class="material-symbols-outlined text-amber-500 text-lg">calendar_month</span></div>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight">Días Almacenados</span>
+        </div>
+        <div class="text-xl lg:text-2xl font-black dark:text-white" id="kpi-importe">—</div>
+      </div>
+      <div class="p-4 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-purple-500/10"><span class="material-symbols-outlined text-purple-500 text-lg">hub</span></div>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight">Ref. Cruzadas</span>
+        </div>
+        <div class="text-xl lg:text-2xl font-black dark:text-white" id="kpi-refs">—</div>
+      </div>
+    </div>
+
+    <!-- KPI Cards Row 2: Hoy / Semana / Mes -->
+    <div class="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+      <div class="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+        <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">Docs Hoy</p>
+        <div class="text-lg font-black dark:text-white" id="kpi-docs-hoy">—</div>
+        <p class="text-[10px] text-slate-500" id="kpi-docs-hoy-var"></p>
+      </div>
+      <div class="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/20">
+        <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Docs Semana</p>
+        <div class="text-lg font-black dark:text-white" id="kpi-docs-semana">—</div>
+        <p class="text-[10px] text-slate-500">Últimos 7 días</p>
+      </div>
+      <div class="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+        <p class="text-[10px] font-bold text-violet-400 uppercase mb-1">Docs Mes</p>
+        <div class="text-lg font-black dark:text-white" id="kpi-docs-mes">—</div>
+        <p class="text-[10px] text-slate-500">Últimos 30 días</p>
+      </div>
+      <div class="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+        <p class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Licit. Hoy</p>
+        <div class="text-lg font-black dark:text-white" id="kpi-lics-hoy">—</div>
+      </div>
+      <div class="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
+        <p class="text-[10px] font-bold text-teal-400 uppercase mb-1">Licit. Semana</p>
+        <div class="text-lg font-black dark:text-white" id="kpi-lics-semana">—</div>
+        <p class="text-[10px] text-slate-500">Últimos 7 días</p>
+      </div>
+      <div class="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
+        <p class="text-[10px] font-bold text-cyan-400 uppercase mb-1">Licit. Mes</p>
+        <div class="text-lg font-black dark:text-white" id="kpi-lics-mes">—</div>
+        <p class="text-[10px] text-slate-500">Últimos 30 días</p>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Tendencia de Publicaciones</h3>
+        <p class="text-xs text-slate-500 mb-4">Últimos 30 días laborables</p>
+        <div class="chart-container" style="height:280px"><canvas id="dash-trend"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Tipos de Documento</h3>
+        <p class="text-xs text-slate-500 mb-4">Distribución por tipo</p>
+        <div class="chart-container" style="height:280px"><canvas id="dash-types"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Thematic + Depts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Análisis Temático</h3>
+        <p class="text-xs text-slate-500 mb-4">BOE vs Licitaciones por tema</p>
+        <div class="chart-container" style="height:300px"><canvas id="dash-thematic"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Top 10 Departamentos</h3>
+        <p class="text-xs text-slate-500 mb-4">Por número de publicaciones</p>
+        <div class="chart-container" style="height:300px"><canvas id="dash-depts"></canvas></div>
+      </div>
+    </div>
+  `;
+
+  const [data, tematico] = await Promise.all([loadDashboard(), loadAnalisisTematico()]);
+  if (!data) return;
+  const c = chartColors();
+
+  // KPIs
+  document.getElementById('kpi-docs').textContent = formatNumber(data.total_documentos);
+  document.getElementById('kpi-lics').textContent = formatNumber(data.total_licitaciones);
+  document.getElementById('kpi-importe').textContent = data.datos_desde ? `${data.datos_desde.substring(0,7)} → hoy` : '—';
+  document.getElementById('kpi-refs').textContent = '—';
+
+  // Weekly/Monthly KPIs
+  document.getElementById('kpi-docs-hoy').textContent = formatNumber(data.publicaciones_hoy);
+  const varEl = document.getElementById('kpi-docs-hoy-var');
+  if (data.variacion_publicaciones > 0) varEl.innerHTML = `<span class="text-emerald-500">+${data.variacion_publicaciones}%</span> vs ayer`;
+  else if (data.variacion_publicaciones < 0) varEl.innerHTML = `<span class="text-red-500">${data.variacion_publicaciones}%</span> vs ayer`;
+  else varEl.textContent = 'Sin variación';
+  document.getElementById('kpi-docs-semana').textContent = formatNumber(data.publicaciones_semana || 0);
+  document.getElementById('kpi-docs-mes').textContent = formatNumber(data.publicaciones_mes || 0);
+  document.getElementById('kpi-lics-hoy').textContent = formatNumber(data.licitaciones_hoy || 0);
+  document.getElementById('kpi-lics-semana').textContent = formatNumber(data.licitaciones_semana || 0);
+  document.getElementById('kpi-lics-mes').textContent = formatNumber(data.licitaciones_mes || 0);
+
+  loadReferencias().then(r => {
+    if (r) document.getElementById('kpi-refs').textContent = formatNumber(r.total);
+  });
+
+  // Trend chart
+  if (data.tendencia_30_dias?.length) {
+    chartInstances.dashTrend = new Chart(document.getElementById('dash-trend'), {
+      type: 'bar',
+      data: {
+        labels: data.tendencia_30_dias.map(d => d.dia),
+        datasets: [{
+          label: 'Publicaciones',
+          data: data.tendencia_30_dias.map(d => d.total),
+          backgroundColor: data.tendencia_30_dias.map((d, i) => i === data.tendencia_30_dias.length - 1 ? '#1978e5' : 'rgba(25,120,229,0.3)'),
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: c.text, maxTicksLimit: 10, font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: c.text }, grid: { color: c.grid }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Types donut
+  if (data.distribucion_tipos) {
+    const entries = Object.entries(data.distribucion_tipos).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const cols = ['#1978e5', '#0033A0', '#FFB81C', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+    chartInstances.dashTypes = new Chart(document.getElementById('dash-types'), {
+      type: 'doughnut',
+      data: {
+        labels: entries.map(e => e[0]),
+        datasets: [{ data: entries.map(e => e[1]), backgroundColor: cols, borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        plugins: { legend: { position: 'right', labels: { color: c.text, font: { size: 9 }, padding: 6, usePointStyle: true } } }
+      }
+    });
+  }
+
+  // Thematic bar
+  if (tematico) {
+    const themes = Object.entries(tematico).slice(0, 8);
+    chartInstances.dashThematic = new Chart(document.getElementById('dash-thematic'), {
+      type: 'bar',
+      data: {
+        labels: themes.map(t => t[0].replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())),
+        datasets: [
+          { label: 'BOE', data: themes.map(t => t[1].boe), backgroundColor: '#1978e5', borderRadius: 4 },
+          { label: 'Licitaciones', data: themes.map(t => t[1].licitaciones), backgroundColor: '#FFB81C', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend: { labels: { color: c.text, font: { size: 10 } } } },
+        scales: {
+          x: { stacked: true, ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { stacked: true, ticks: { color: c.text, font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Depts bar
+  if (data.top_departamentos?.length) {
+    const depts = data.top_departamentos.slice(0, 10);
+    chartInstances.dashDepts = new Chart(document.getElementById('dash-depts'), {
+      type: 'bar',
+      data: {
+        labels: depts.map(d => truncate(d.nombre, 25)),
+        datasets: [{ label: 'Publicaciones', data: depts.map(d => d.total), backgroundColor: '#0033A0', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid }, beginAtZero: true },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+// ─── PAGE: LICITACIONES ──────────────────────────────────────
+
+async function renderLicitaciones(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Licitaciones y Gasto Público</h2>
+      <p class="text-sm text-slate-500">Análisis de contratación pública: montos, empresas adjudicatarias y transparencia. Datos del BOE Sección V-A.</p>
+    </div>
+
+    <!-- Period selector -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button onclick="switchGastoPeriod('diario')" id="gp-diario" class="px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-bold bg-primary text-white">Último mes</button>
+      <button onclick="switchGastoPeriod('semanal')" id="gp-semanal" class="px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400">Trimestre</button>
+      <button onclick="switchGastoPeriod('mensual')" id="gp-mensual" class="px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400">Año completo</button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8" id="gasto-kpis">
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-emerald-500/10"><span class="material-symbols-outlined text-emerald-500 text-lg">payments</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Gasto Total</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white truncate" id="gasto-total">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate" id="gasto-contratos-info"></p>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-primary/10"><span class="material-symbols-outlined text-primary text-lg">receipt_long</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Contratos con €</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white" id="gasto-num-contratos">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate" id="gasto-media-info"></p>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-amber-500/10"><span class="material-symbols-outlined text-amber-500 text-lg">trending_up</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Adjudicaciones</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white truncate" id="gasto-adj">—</div>
+        <p class="text-[10px] lg:text-xs text-emerald-500 font-bold mt-1 truncate" id="gasto-adj-info"></p>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-purple-500/10"><span class="material-symbols-outlined text-purple-500 text-lg">storefront</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">PYME</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white" id="gasto-pyme">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1">de contratos a PYMEs</p>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Gasto por Día</h3>
+        <p class="text-xs text-slate-500 mb-4">Evolución del importe de contratos publicados</p>
+        <div class="chart-container" style="height:280px"><canvas id="chart-gasto-dia"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Gasto por Departamento</h3>
+        <p class="text-xs text-slate-500 mb-4">Ministerios y organismos con mayor importe</p>
+        <div class="chart-container" style="height:280px"><canvas id="chart-gasto-dept"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Tipo de Contrato</h3>
+        <p class="text-xs text-slate-500 mb-4">Distribución por categoría</p>
+        <div class="chart-container" style="height:280px"><canvas id="chart-gasto-tipo"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Top Empresas Adjudicatarias</h3>
+        <p class="text-xs text-slate-500 mb-4">Principales receptoras de contratos públicos</p>
+        <div class="chart-container" style="height:280px"><canvas id="chart-gasto-empresas"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 3: CCAA -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Gasto por Comunidad Autónoma</h3>
+        <p class="text-xs text-slate-500 mb-4">Distribución geográfica del importe de contratos</p>
+        <div class="chart-container" style="height:340px"><canvas id="chart-gasto-ccaa"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Contratos por Comunidad Autónoma</h3>
+        <p class="text-xs text-slate-500 mb-4">Número de licitaciones por ámbito geográfico</p>
+        <div class="chart-container" style="height:340px"><canvas id="chart-ccaa-count"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 4: Sector -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Gasto por Sector</h3>
+        <p class="text-xs text-slate-500 mb-4">Salud, educación, transporte, industria, medio ambiente...</p>
+        <div class="chart-container" style="height:360px"><canvas id="chart-gasto-sector"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Importe por Sector</h3>
+        <p class="text-xs text-slate-500 mb-4">Volumen económico por categoría temática</p>
+        <div class="chart-container" style="height:360px"><canvas id="chart-gasto-sector-importe"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Chart drilldown detail panel -->
+    <div id="lic-chart-detalle-panel" class="mb-8 hidden">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold dark:text-white"><span id="lic-chart-detalle-titulo">Detalle</span> <span id="lic-chart-detalle-count" class="text-sm font-normal text-slate-500"></span></h3>
+          <button onclick="document.getElementById('lic-chart-detalle-panel').classList.add('hidden')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button>
+        </div>
+        <div id="lic-chart-detalle-lista" class="space-y-2 max-h-96 overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <!-- Enhanced Filters -->
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Buscar</label>
+          <input id="lic-search" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Empresa, objeto, departamento, CPV..." type="text"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Empresa / NIF</label>
+          <input id="lic-empresa" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Nombre empresa o NIF..." type="text"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Tipo contrato</label>
+          <select id="lic-tipo" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            <option>Servicios</option><option>Obras</option><option>Suministros</option><option>Concesión</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Procedimiento</label>
+          <select id="lic-proc" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            <option>Abierto</option><option>Restringido</option><option>Negociado</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Comunidad Autónoma</label>
+          <select id="lic-ccaa" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todas</option>
+            <option>Andalucía</option><option>Aragón</option><option>Canarias</option><option>Cantabria</option>
+            <option>Castilla y León</option><option>Castilla-La Mancha</option><option>Cataluña</option>
+            <option>Ciudad de Ceuta</option><option>Ciudad de Melilla</option><option>Comunidad de Madrid</option>
+            <option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
+            <option>Illes Balears</option><option>La Rioja</option><option>Nacional</option>
+            <option>País Vasco</option><option>Principado de Asturias</option><option>Región de Murcia</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Importe mín. (€)</label>
+          <input id="lic-imp-min" type="number" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="0"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Importe máx. (€)</label>
+          <input id="lic-imp-max" type="number" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Sin límite"/>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Año</label>
+            <select id="lic-year" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildYearOptions()}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Mes</label>
+            <select id="lic-month" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildMonthOptions()}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="searchLicitaciones()" class="bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+          <span class="material-symbols-outlined">search</span> Buscar
+        </button>
+        <button onclick="clearLicFilters()" class="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2">
+          <span class="material-symbols-outlined">clear_all</span> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <div id="lic-table-container"></div>
+  `;
+
+  // Load data in parallel
+  const [gastoData, licData] = await Promise.all([
+    loadResumenGasto('diario'),
+    loadLicitaciones({ por_pagina: 20 })
+  ]);
+
+  renderGastoCharts(gastoData);
+  if (licData) renderLicitacionesTable('lic-table-container', licData);
+}
+
+function renderGastoCharts(data) {
+  if (!data) return;
+  const c = chartColors();
+
+  // KPIs
+  document.getElementById('gasto-total').textContent = formatCurrency(data.importe_total);
+  document.getElementById('gasto-contratos-info').textContent = `${data.num_licitaciones_total} licitaciones analizadas`;
+  document.getElementById('gasto-num-contratos').textContent = formatNumber(data.num_contratos);
+  document.getElementById('gasto-media-info').textContent = `Media: ${formatCurrency(data.importe_medio)}`;
+  document.getElementById('gasto-adj').textContent = formatCurrency(data.importe_adjudicaciones);
+  document.getElementById('gasto-adj-info').textContent = `${data.num_adjudicaciones} adjudicaciones formalizadas`;
+  document.getElementById('gasto-pyme').textContent = data.pct_pyme + '%';
+
+  // Gasto por día (bar)
+  if (data.por_dia) {
+    const dias = Object.entries(data.por_dia);
+    if (chartInstances.gastoDia) chartInstances.gastoDia.destroy();
+    chartInstances.gastoDia = new Chart(document.getElementById('chart-gasto-dia'), {
+      type: 'bar',
+      data: {
+        labels: dias.map(([f]) => { const d = f.split('-'); return d[2] + '/' + d[1]; }),
+        datasets: [{
+          label: 'Importe (€)',
+          data: dias.map(([, v]) => v.importe),
+          backgroundColor: 'rgba(25,120,229,0.6)',
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('dia', dias[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } } },
+        scales: {
+          x: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: c.text, callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: c.grid }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Gasto por departamento (horizontal bar)
+  if (data.por_departamento) {
+    const depts = Object.entries(data.por_departamento).slice(0, 8);
+    if (chartInstances.gastoDept) chartInstances.gastoDept.destroy();
+    chartInstances.gastoDept = new Chart(document.getElementById('chart-gasto-dept'), {
+      type: 'bar',
+      data: {
+        labels: depts.map(([n]) => truncate(n, 28)),
+        datasets: [{ label: 'Importe (€)', data: depts.map(([, v]) => v.importe), backgroundColor: '#0033A0', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('departamento', depts[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) + ' (' + depts[ctx.dataIndex][1].count + ' contratos)' } } },
+        scales: {
+          x: { ticks: { color: c.text, callback: v => v >= 1e6 ? (v/1e6).toFixed(0)+'M' : (v/1e3).toFixed(0)+'k' }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Tipo de contrato (donut)
+  if (data.por_tipo_contrato) {
+    const tipos = Object.entries(data.por_tipo_contrato);
+    const cols = ['#1978e5', '#0033A0', '#FFB81C', '#10b981', '#ef4444', '#8b5cf6'];
+    if (chartInstances.gastoTipo) chartInstances.gastoTipo.destroy();
+    chartInstances.gastoTipo = new Chart(document.getElementById('chart-gasto-tipo'), {
+      type: 'doughnut',
+      data: {
+        labels: tipos.map(([t, v]) => `${t} (${v.count})`),
+        datasets: [{ data: tipos.map(([, v]) => v.importe), backgroundColor: cols, borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('tipo', tipos[elements[0].index][0]); },
+        plugins: {
+          legend: { position: 'right', labels: { color: c.text, font: { size: 10 }, padding: 8, usePointStyle: true } },
+          tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) } }
+        }
+      }
+    });
+  }
+
+  // Top empresas (horizontal bar)
+  if (data.por_empresa) {
+    const emps = Object.entries(data.por_empresa).slice(0, 8);
+    if (chartInstances.gastoEmpresas) chartInstances.gastoEmpresas.destroy();
+    chartInstances.gastoEmpresas = new Chart(document.getElementById('chart-gasto-empresas'), {
+      type: 'bar',
+      data: {
+        labels: emps.map(([n]) => truncate(n, 25)),
+        datasets: [{ label: 'Importe (€)', data: emps.map(([, v]) => v.importe), backgroundColor: emps.map(([, v]) => v.es_pyme ? '#10b981' : '#f59e0b'), borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('empresa', emps[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) + ' (' + emps[ctx.dataIndex][1].count + ' contratos)' } } },
+        scales: {
+          x: { ticks: { color: c.text, callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1e3).toFixed(0)+'k' }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Gasto por CCAA (horizontal bar)
+  if (data.por_ccaa) {
+    const ccaas = Object.entries(data.por_ccaa).slice(0, 17);
+    const ccaaColors = ['#1978e5', '#0033A0', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#6366f1', '#14b8a6', '#a855f7', '#e11d48', '#0ea5e9', '#84cc16', '#d946ef', '#64748b'];
+    if (chartInstances.gastoCCAA) chartInstances.gastoCCAA.destroy();
+    chartInstances.gastoCCAA = new Chart(document.getElementById('chart-gasto-ccaa'), {
+      type: 'bar',
+      data: {
+        labels: ccaas.map(([n]) => truncate(n, 22)),
+        datasets: [{ label: 'Importe (€)', data: ccaas.map(([, v]) => v.importe), backgroundColor: ccaaColors.slice(0, ccaas.length), borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('ccaa', ccaas[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) + ' (' + ccaas[ctx.dataIndex][1].count + ' contratos)' } } },
+        scales: {
+          x: { ticks: { color: c.text, callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1e3).toFixed(0)+'k' }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Contratos por CCAA (horizontal bar - count)
+  if (data.por_ccaa_todas) {
+    const ccaasAll = Object.entries(data.por_ccaa_todas).slice(0, 17);
+    if (chartInstances.ccaaCount) chartInstances.ccaaCount.destroy();
+    chartInstances.ccaaCount = new Chart(document.getElementById('chart-ccaa-count'), {
+      type: 'bar',
+      data: {
+        labels: ccaasAll.map(([n]) => truncate(n, 22)),
+        datasets: [{ label: 'Licitaciones', data: ccaasAll.map(([, v]) => v.count), backgroundColor: '#0033A0', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('ccaa', ccaasAll[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' licitaciones (' + formatCurrency(ccaasAll[ctx.dataIndex][1].importe) + ')' } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid }, beginAtZero: true },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Sector por número de contratos (doughnut)
+  if (data.por_sector) {
+    const sects = Object.entries(data.por_sector);
+    const sectorPalette = ['#1978e5','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#a855f7','#0ea5e9','#d946ef','#64748b'];
+    if (chartInstances.gastoSector) chartInstances.gastoSector.destroy();
+    chartInstances.gastoSector = new Chart(document.getElementById('chart-gasto-sector'), {
+      type: 'doughnut',
+      data: {
+        labels: sects.map(([s, v]) => `${s} (${v.count})`),
+        datasets: [{ data: sects.map(([, v]) => v.count), backgroundColor: sectorPalette, borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '50%',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('sector', sects[elements[0].index][0]); },
+        plugins: {
+          legend: { position: 'right', labels: { color: c.text, font: { size: 9 }, boxWidth: 10, padding: 5 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} contratos` } }
+        }
+      }
+    });
+
+    // Sector por importe (horizontal bar)
+    if (chartInstances.gastoSectorImp) chartInstances.gastoSectorImp.destroy();
+    chartInstances.gastoSectorImp = new Chart(document.getElementById('chart-gasto-sector-importe'), {
+      type: 'bar',
+      data: {
+        labels: sects.map(([s]) => truncate(s, 25)),
+        datasets: [{ label: 'Importe (€)', data: sects.map(([, v]) => v.importe), backgroundColor: sectorPalette, borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showLicChartDetalle('sector', sects[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatCurrency(ctx.raw) + ' (' + sects[ctx.dataIndex][1].count + ' contratos)' } } },
+        scales: {
+          x: { ticks: { color: c.text, callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1e3).toFixed(0)+'k' }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+async function showLicChartDetalle(campo, valor) {
+  const panel = document.getElementById('lic-chart-detalle-panel');
+  const titulo = document.getElementById('lic-chart-detalle-titulo');
+  const countEl = document.getElementById('lic-chart-detalle-count');
+  const lista = document.getElementById('lic-chart-detalle-lista');
+  const labels = { departamento: 'Departamento', tipo: 'Tipo de contrato', empresa: 'Empresa', ccaa: 'CCAA', sector: 'Sector', dia: 'Fecha' };
+  titulo.textContent = (labels[campo] || campo) + ': ' + valor;
+  countEl.textContent = 'Cargando...';
+  lista.innerHTML = '<div class="text-center py-4 text-slate-500">Cargando...</div>';
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const params = { por_pagina: 50 };
+  if (campo === 'departamento') params.departamento = valor;
+  else if (campo === 'tipo') params.tipo = valor;
+  else if (campo === 'empresa') params.empresa = valor;
+  else if (campo === 'ccaa') params.ccaa = valor;
+  else if (campo === 'sector') params.texto = valor;
+  else if (campo === 'dia') { params.fecha_desde = valor; params.fecha_hasta = valor; }
+
+  try {
+    const data = await api('licitaciones', params);
+    const items = data.licitaciones || [];
+    countEl.textContent = `(${items.length}${items.length >= 50 ? '+' : ''} resultados)`;
+    if (!items.length) { lista.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">Sin resultados</p>'; return; }
+    lista.innerHTML = items.map(l => {
+      const imp = l.importe ? formatCurrency(l.importe) : 'Sin importe';
+      const fecha = l.fecha_publicacion || '';
+      const ofertaInfo = (l.oferta_mayor ? ' ▲' + formatCurrency(l.oferta_mayor) : '') + (l.oferta_menor ? ' ▼' + formatCurrency(l.oferta_menor) : '');
+      return `<div class="p-3 rounded-lg bg-slate-50 dark:bg-background-dark border border-slate-100 dark:border-border-dark hover:border-primary/40 transition-colors cursor-pointer" onclick="window.open('https://www.boe.es/diario_boe/txt.php?id=${l.id || ''}','_blank')">
+        <div class="flex justify-between items-start">
+          <span class="text-sm font-medium dark:text-white line-clamp-2 flex-1">${l.titulo || l.objeto || 'Sin título'}</span>
+          <span class="text-xs font-bold ml-2 whitespace-nowrap ${l.importe >= 1000000 ? 'text-red-600' : 'text-emerald-600'}">${imp}${ofertaInfo}</span>
+        </div>
+        <div class="flex gap-3 mt-1 text-xs text-slate-500">
+          <span>${l.adjudicatario || l.empresa || 'N/A'}</span>
+          <span>${l.organo_contratacion ? '· ' + truncate(l.organo_contratacion, 40) : ''}</span>
+          <span class="ml-auto">${fecha}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    lista.innerHTML = '<p class="text-red-500 text-sm text-center py-4">Error al cargar datos</p>';
+  }
+}
+
+async function switchGastoPeriod(periodo) {
+  ['diario','semanal','mensual'].forEach(p => {
+    const btn = document.getElementById('gp-' + p);
+    if (!btn) return;
+    btn.className = p === periodo
+      ? 'px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white'
+      : 'px-4 py-2 rounded-lg text-sm font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400';
+  });
+  destroyCharts();
+  const data = await loadResumenGasto(periodo);
+  renderGastoCharts(data);
+}
+
+function clearLicFilters() {
+  ['lic-search','lic-empresa','lic-tipo','lic-proc','lic-ccaa','lic-imp-min','lic-imp-max','lic-year','lic-month'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  searchLicitaciones();
+}
+
+function renderLicitacionesTable(containerId, data) {
+  const c = document.getElementById(containerId);
+  if (!data || !data.licitaciones?.length) {
+    c.innerHTML = '<div class="p-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">inbox</span><p>No se encontraron licitaciones</p></div>';
+    return;
+  }
+
+  c.innerHTML = `
+    <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-2xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-border-dark">
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Tipo</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Título / Objeto</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Órgano</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Adjudicatario</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Importe</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">CCAA</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Proc.</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+            ${data.licitaciones.map(l => `
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+                <td class="px-3 py-3"><span class="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${formatDate(l.fecha_publicacion)}</span></td>
+                <td class="px-3 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase ${l.modalidad?.includes('ormalización') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-secondary-navy/10 text-blue-400'}">${l.tipo_contrato || l.modalidad || 'N/A'}</span>
+                  ${l.es_pyme ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 ml-1">PYME</span>' : ''}
+                </td>
+                <td class="px-3 py-3" style="min-width:260px;max-width:420px">
+                  ${l.url_detalle ? `<a href="${l.url_detalle}" target="_blank" class="text-sm font-bold dark:text-white hover:text-primary transition-colors block truncate">${truncate(l.titulo, 80)}</a>` : `<span class="text-sm font-bold dark:text-white block truncate">${truncate(l.titulo, 80)}</span>`}
+                  ${l.cpv ? `<p class="text-[10px] text-slate-400 mt-0.5 truncate" title="${l.cpv}">CPV: ${truncate(l.cpv, 50)}</p>` : ''}
+                </td>
+                <td class="px-3 py-3"><span class="text-xs text-slate-600 dark:text-slate-400 block truncate max-w-[200px]" title="${l.organo_contratacion}">${truncate(l.organo_contratacion, 30)}</span></td>
+                <td class="px-3 py-3">
+                  ${l.adjudicatario
+                    ? `<span class="text-xs font-bold text-slate-700 dark:text-slate-300 block truncate max-w-[200px]" title="${l.adjudicatario}${l.nif_adjudicatario ? ' ('+l.nif_adjudicatario+')' : ''}">${truncate(l.adjudicatario, 30)}</span>
+                       ${l.nif_adjudicatario ? `<span class="text-[10px] text-slate-400">${l.nif_adjudicatario}</span>` : ''}`
+                    : '<span class="text-xs text-slate-400">—</span>'}
+                </td>
+                <td class="px-3 py-3 text-right">
+                  <span class="text-sm font-bold whitespace-nowrap ${l.importe ? 'text-emerald-500' : 'text-slate-400'}">${l.importe ? formatCurrency(l.importe) : '—'}</span>
+                  ${l.oferta_mayor || l.oferta_menor ? `<div class="text-[10px] text-slate-400 mt-0.5 whitespace-nowrap">${l.oferta_mayor ? `<span class="text-orange-400">▲${formatCurrency(l.oferta_mayor)}</span>` : ''}${l.oferta_mayor && l.oferta_menor ? ' · ' : ''}${l.oferta_menor ? `<span class="text-blue-400">▼${formatCurrency(l.oferta_menor)}</span>` : ''}</div>` : ''}
+                </td>
+                <td class="px-3 py-3"><span class="text-xs text-slate-600 dark:text-slate-400 block truncate max-w-[160px]" title="${l.ambito_geografico || ''}">${truncate(l.ambito_geografico || '—', 22)}</span></td>
+                <td class="px-3 py-3"><span class="text-xs text-slate-500">${l.procedimiento || '—'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Página ${data.pagina} de ${data.total_paginas} · ${data.total} resultados</span>
+        <div class="flex gap-2">
+          <button onclick="paginateLicitaciones(${data.pagina - 1})" ${data.pagina <= 1 ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button onclick="paginateLicitaciones(${data.pagina + 1})" ${data.pagina >= data.total_paginas ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function _getLicFilterParams(page = 1) {
+  const texto = document.getElementById('lic-search')?.value || '';
+  const tipo = document.getElementById('lic-tipo')?.value || '';
+  const empresa = document.getElementById('lic-empresa')?.value || '';
+  const proc = document.getElementById('lic-proc')?.value || '';
+  const ccaa = document.getElementById('lic-ccaa')?.value || '';
+  const impMin = document.getElementById('lic-imp-min')?.value || '';
+  const impMax = document.getElementById('lic-imp-max')?.value || '';
+  const params = { texto, tipo, empresa, procedimiento: proc, ccaa, pagina: page };
+  if (impMin) params.importe_min = impMin;
+  if (impMax) params.importe_max = impMax;
+  const dateRange = _yearMonthToDateRange('lic-year', 'lic-month');
+  if (dateRange.fecha_desde) params.fecha_desde = dateRange.fecha_desde;
+  if (dateRange.fecha_hasta) params.fecha_hasta = dateRange.fecha_hasta;
+  return params;
+}
+
+async function searchLicitaciones() {
+  const data = await loadLicitaciones(_getLicFilterParams(1));
+  if (data) renderLicitacionesTable('lic-table-container', data);
+}
+
+async function paginateLicitaciones(page) {
+  if (page < 1) return;
+  const data = await loadLicitaciones(_getLicFilterParams(page));
+  if (data) renderLicitacionesTable('lic-table-container', data);
+}
+
+// ─── PAGE: LEYES ─────────────────────────────────────────────
+
+async function renderLeyes(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Legislación y Normativa</h2>
+      <p class="text-sm text-slate-500">Leyes, Reales Decretos, Órdenes y otra normativa del BOE</p>
+    </div>
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark flex flex-wrap items-end gap-4">
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Buscar normativa</label>
+        <input id="law-search" onkeydown="if(event.key==='Enter')searchLeyes()" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Buscar leyes, decretos..." type="text"/>
+      </div>
+      <div class="w-40">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Tipo</label>
+        <select id="law-tipo" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+          <option value="">Todos</option>
+          <option value="ley">Ley</option><option value="real decreto">Real Decreto</option><option value="orden">Orden</option><option value="resolución">Resolución</option><option value="decreto">Decreto</option>
+        </select>
+      </div>
+      <button onclick="searchLeyes()" class="bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+        <span class="material-symbols-outlined">search</span> Buscar
+      </button>
+    </div>
+    <div id="leyes-table-container"></div>
+  `;
+
+  await searchLeyes();
+}
+
+async function searchLeyes(page = 1) {
+  const texto = document.getElementById('law-search')?.value || '';
+  const tipo = document.getElementById('law-tipo')?.value || '';
+  const data = await loadDocumentos({ texto, tipo: tipo || 'ley', pagina: page, por_pagina: 20 });
+  if (data) renderDocumentosTableHTML('leyes-table-container', data, 'searchLeyes');
+}
+
+// ─── PAGE: BÚSQUEDA AVANZADA ─────────────────────────────────
+
+async function renderBusqueda(container) {
+  // Load departments for filter
+  const deptData = await api('departamentos');
+  const depts = deptData?.departamentos || [];
+
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Búsqueda Avanzada Global</h2>
+      <p class="text-sm text-slate-500">Busca en todos los documentos: BOE, Licitaciones y Subvenciones (BDNS)</p>
+    </div>
+
+    <div class="mb-6 p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+      <!-- Source selector -->
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Fuente de datos</label>
+        <div class="flex flex-wrap gap-2" id="adv-fuente-btns">
+          <button type="button" onclick="setAdvFuente('todos')" data-fuente="todos" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary text-white">Todos</button>
+          <button type="button" onclick="setAdvFuente('boe')" data-fuente="boe" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400">BOE</button>
+          <button type="button" onclick="setAdvFuente('licitaciones')" data-fuente="licitaciones" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400">Licitaciones</button>
+          <button type="button" onclick="setAdvFuente('subvenciones')" data-fuente="subvenciones" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400">Subvenciones</button>
+        </div>
+        <input type="hidden" id="adv-fuente" value="todos"/>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Texto libre</label>
+          <input id="adv-texto" onkeydown="if(event.key==='Enter')advancedSearch()" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Palabras clave..." type="text"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Departamento / Órgano</label>
+          <select id="adv-dept" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            ${depts.map(d => `<option value="${d}">${truncate(d, 50)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Tipo de documento</label>
+          <select id="adv-tipo" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            <option>Ley</option><option>Real Decreto</option><option>Orden</option><option>Resolución</option>
+            <option>Licitación</option><option>Adjudicación</option><option>Anuncio</option><option>Convenio</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Sección BOE</label>
+          <select id="adv-seccion" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todas</option>
+            <option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option><option>T.C.</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fecha desde</label>
+          <input id="adv-desde" type="date" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fecha hasta</label>
+          <input id="adv-hasta" type="date" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Año</label>
+            <select id="adv-year" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildYearOptions()}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Mes</label>
+            <select id="adv-month" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildMonthOptions()}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button onclick="advancedSearch()" class="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+          <span class="material-symbols-outlined">search</span> Buscar
+        </button>
+        <button onclick="clearAdvancedSearch()" class="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 text-slate-600 dark:text-slate-400">
+          <span class="material-symbols-outlined">clear_all</span> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- Source counters -->
+    <div id="adv-counters" class="hidden mb-4">
+      <div class="flex flex-wrap gap-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-500" id="cnt-boe"></span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500" id="cnt-licitaciones"></span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-500" id="cnt-subvenciones"></span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-500" id="cnt-total"></span>
+      </div>
+    </div>
+
+    <div id="adv-results"></div>
+  `;
+}
+
+function setAdvFuente(fuente) {
+  document.getElementById('adv-fuente').value = fuente;
+  document.querySelectorAll('#adv-fuente-btns button').forEach(btn => {
+    if (btn.dataset.fuente === fuente) {
+      btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-primary text-white';
+    } else {
+      btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400';
+    }
+  });
+}
+
+async function advancedSearch(page = 1) {
+  const params = {
+    texto: document.getElementById('adv-texto')?.value || '',
+    fuente: document.getElementById('adv-fuente')?.value || 'todos',
+    departamento: document.getElementById('adv-dept')?.value || '',
+    tipo: document.getElementById('adv-tipo')?.value || '',
+    seccion: document.getElementById('adv-seccion')?.value || '',
+    fecha_desde: document.getElementById('adv-desde')?.value || '',
+    fecha_hasta: document.getElementById('adv-hasta')?.value || '',
+    pagina: page,
+    por_pagina: 20
+  };
+  // Year/month override (only if no manual date set)
+  if (!params.fecha_desde && !params.fecha_hasta) {
+    const dateRange = _yearMonthToDateRange('adv-year', 'adv-month');
+    if (dateRange.fecha_desde) params.fecha_desde = dateRange.fecha_desde;
+    if (dateRange.fecha_hasta) params.fecha_hasta = dateRange.fecha_hasta;
+  }
+
+  const resultsEl = document.getElementById('adv-results');
+  resultsEl.innerHTML = '<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div><span class="ml-3 text-sm text-slate-500">Buscando en todas las fuentes...</span></div>';
+
+  const data = await api('busqueda-global', params);
+  if (!data) {
+    resultsEl.innerHTML = '<div class="p-12 text-center text-red-400 bg-white dark:bg-surface-dark rounded-2xl border border-red-200 dark:border-red-800"><span class="material-symbols-outlined text-4xl mb-2 block">error</span><p>Error al realizar la búsqueda. Inténtalo de nuevo.</p></div>';
+    return;
+  }
+
+  // Update source counters
+  if (data.contadores) {
+    const cDiv = document.getElementById('adv-counters');
+    cDiv.classList.remove('hidden');
+    document.getElementById('cnt-boe').textContent = 'BOE: ' + formatNumber(data.contadores.boe);
+    document.getElementById('cnt-licitaciones').textContent = 'Licitaciones: ' + formatNumber(data.contadores.licitaciones);
+    document.getElementById('cnt-subvenciones').textContent = 'Subvenciones: ' + formatNumber(data.contadores.subvenciones);
+    document.getElementById('cnt-total').textContent = 'Total: ' + formatNumber(data.total);
+  }
+
+  renderGlobalResultsTable('adv-results', data, 'advancedSearch');
+}
+
+function renderGlobalResultsTable(containerId, data, paginateFn) {
+  const c = document.getElementById(containerId);
+  if (!data || !data.documentos?.length) {
+    c.innerHTML = '<div class="p-12 text-center text-slate-500 bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark"><span class="material-symbols-outlined text-4xl mb-2 block">inbox</span><p>No se encontraron resultados. Prueba con otros términos o amplía el rango de fechas.</p></div>';
+    return;
+  }
+
+  const fuenteColors = { 'BOE': 'blue', 'Licitación': 'emerald', 'Subvención': 'purple' };
+
+  c.innerHTML = `
+    <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-2xl overflow-hidden shadow-sm fade-in">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-border-dark">
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Fuente</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Tipo</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Título / Descripción</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Importe</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Enlace</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+            ${data.documentos.map(d => {
+              const fc = fuenteColors[d.fuente] || 'slate';
+              return `
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+                <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-${fc}-500/10 text-${fc}-500">${d.fuente}</span></td>
+                <td class="px-4 py-3"><span class="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${formatDate(d.fecha)}</span></td>
+                <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase ${tipoBadgeClass(d.tipo)}">${truncate(d.tipo, 20)}</span></td>
+                <td class="px-4 py-3 max-w-md">
+                  ${d.url_html ? `<a href="${d.url_html}" target="_blank" class="text-sm font-bold text-slate-900 dark:text-white hover:text-primary transition-colors block truncate">${truncate(d.titulo, 65)}</a>` : `<span class="text-sm font-bold text-slate-900 dark:text-white block truncate">${truncate(d.titulo, 65)}</span>`}
+                  <p class="text-xs text-slate-500 mt-0.5 truncate">${d.descripcion || d.referencia || ''}</p>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">${d.importe ? `<span class="text-sm font-bold text-emerald-500">${formatCurrency(d.importe)}</span>` : '<span class="text-xs text-slate-400">—</span>'}</td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex justify-end gap-1">
+                    ${d.url_pdf ? `<a href="${d.url_pdf}" target="_blank" class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-red-500" title="PDF"><span class="material-symbols-outlined">picture_as_pdf</span></a>` : ''}
+                    ${d.url_html ? `<a href="${d.url_html}" target="_blank" class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary" title="Ver"><span class="material-symbols-outlined">open_in_new</span></a>` : ''}
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-border-dark flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Página ${data.pagina} de ${data.total_paginas} · ${formatNumber(data.total)} resultados</span>
+        <div class="flex gap-2">
+          <button onclick="${paginateFn}(${data.pagina - 1})" ${data.pagina <= 1 ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button onclick="${paginateFn}(${data.pagina + 1})" ${data.pagina >= data.total_paginas ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function clearAdvancedSearch() {
+  ['adv-texto', 'adv-dept', 'adv-tipo', 'adv-seccion', 'adv-desde', 'adv-hasta', 'adv-year', 'adv-month'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  setAdvFuente('todos');
+  document.getElementById('adv-counters')?.classList.add('hidden');
+  document.getElementById('adv-results').innerHTML = '';
+}
+
+// ─── PAGE: REFERENCIAS CRUZADAS ──────────────────────────────
+
+async function renderReferencias(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Referencias Cruzadas y Transparencia</h2>
+      <p class="text-sm text-slate-500">Análisis de correlaciones, concentración de contratos y patrones en la contratación pública. Herramienta para detectar posibles irregularidades.</p>
+    </div>
+
+    <!-- Alertas de Transparencia -->
+    <div class="mb-8 p-6 rounded-2xl bg-gradient-to-br from-amber-500/5 to-red-500/5 border border-amber-500/20 dark:border-amber-500/10">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-2 rounded-lg bg-amber-500/10"><span class="material-symbols-outlined text-amber-500">shield</span></div>
+        <div>
+          <h3 class="font-bold dark:text-white">Análisis de Transparencia</h3>
+          <p class="text-xs text-slate-500">Patrones detectados en la contratación pública (últimos 30 días)</p>
+        </div>
+      </div>
+      <div id="alertas-container" class="space-y-3">
+        <div class="skeleton h-12 rounded-lg"></div>
+        <div class="skeleton h-12 rounded-lg"></div>
+      </div>
+    </div>
+
+    <!-- Company Search -->
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+      <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Búsqueda de Empresa / Adjudicatario</h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Empresa / NIF</label>
+          <input id="ref-empresa" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Nombre o NIF de la empresa..." type="text"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Importe mínimo (€)</label>
+          <input id="ref-imp-min" type="number" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="0"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Importe máximo (€)</label>
+          <input id="ref-imp-max" type="number" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Sin límite"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Tipo contrato</label>
+          <select id="ref-tipo" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            <option>Servicios</option><option>Obras</option><option>Suministros</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Año</label>
+            <select id="ref-year" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildYearOptions()}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Mes</label>
+            <select id="ref-month" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildMonthOptions()}
+            </select>
+          </div>
+        </div>
+        <div class="lg:col-span-3">
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Ministerio / Organismo</label>
+          <select id="ref-ministerio" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos los organismos</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="searchEmpresa()" class="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+          <span class="material-symbols-outlined">person_search</span> Buscar Empresa
+        </button>
+        <button onclick="clearRefSearch()" class="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2">
+          <span class="material-symbols-outlined">clear_all</span> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- Company search results -->
+    <div id="empresa-results" class="mb-8"></div>
+
+    <!-- TOP EMPRESAS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Concentración de Contratos</h3>
+        <p class="text-xs text-slate-500 mb-4">Empresas con mayor volumen de adjudicaciones</p>
+        <div class="chart-container" style="height:300px"><canvas id="chart-empresa-conc"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Distribución por Confianza</h3>
+        <p class="text-xs text-slate-500 mb-4">Nivel de correlación entre documentos BOE y licitaciones</p>
+        <div class="chart-container" style="height:300px"><canvas id="ref-confidence-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Cross References -->
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark flex flex-wrap items-end gap-4">
+      <div class="w-48">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Confianza mínima</label>
+        <select id="ref-confidence" onchange="loadRefData()" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+          <option value="0.1">Baja (≥10%)</option>
+          <option value="0.2" selected>Media (≥20%)</option>
+          <option value="0.4">Alta (≥40%)</option>
+          <option value="0.7">Muy alta (≥70%)</option>
+        </select>
+      </div>
+      <div class="w-32">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Límite</label>
+        <select id="ref-limit" onchange="loadRefData()" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+          <option value="20">20</option><option value="50" selected>50</option><option value="100">100</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="ref-table-container"></div>
+  `;
+
+  // Load company analysis + refs in parallel, also populate ministerio dropdown
+  const [empresasData, deptosData] = await Promise.all([
+    loadAnalisisEmpresas(30),
+    api('departamentos'),
+  ]);
+  
+  // Populate ministerio dropdown
+  const selMin = document.getElementById('ref-ministerio');
+  if (selMin && deptosData?.departamentos) {
+    deptosData.departamentos.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d.length > 55 ? d.substring(0, 52) + '...' : d;
+      opt.title = d;
+      selMin.appendChild(opt);
+    });
+  }
+  
+  renderAlertasTransparencia(empresasData);
+  renderEmpresaChart(empresasData);
+  await loadRefData();
+}
+
+function renderAlertasTransparencia(data) {
+  const container = document.getElementById('alertas-container');
+  if (!data || !data.alertas?.length) {
+    container.innerHTML = '<p class="text-sm text-slate-500">No se detectaron patrones inusuales con los datos actuales.</p>';
+    return;
+  }
+
+  const alertas = data.alertas.slice(0, 10);
+  container.innerHTML = alertas.map(a => {
+    const bgColor = a.nivel === 'alta' ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20';
+    const textColor = a.nivel === 'alta' ? 'text-red-400' : 'text-amber-400';
+    const icon = a.tipo === 'concentracion' ? 'priority_high' : 'repeat';
+    return `<div class="flex items-center gap-3 p-3 rounded-lg border ${bgColor}">
+      <span class="material-symbols-outlined ${textColor}">${icon}</span>
+      <div class="flex-1">
+        <p class="text-sm font-bold dark:text-white">${a.empresa}${a.nif ? ' <span class="text-xs text-slate-400 font-normal">('+a.nif+')</span>' : ''}</p>
+        <p class="text-xs text-slate-500">${a.mensaje}</p>
+      </div>
+      <span class="px-2 py-0.5 rounded text-xs font-bold uppercase ${textColor} ${bgColor}">${a.nivel}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderEmpresaChart(data) {
+  if (!data?.empresas?.length) return;
+  const c = chartColors();
+  
+  const top = data.empresas.filter(e => e.importe_total > 0).slice(0, 10);
+  if (chartInstances.empresaConc) chartInstances.empresaConc.destroy();
+  chartInstances.empresaConc = new Chart(document.getElementById('chart-empresa-conc'), {
+    type: 'bar',
+    data: {
+      labels: top.map(e => truncate(e.nombre, 22) + (e.tipo_sociedad ? '\n(' + e.tipo_sociedad + ')' : '')),
+      datasets: [{ label: 'Importe (€)', data: top.map(e => e.importe_total), backgroundColor: top.map(e => e.contratos >= 3 ? '#ef4444' : e.contratos >= 2 ? '#f59e0b' : '#1978e5'), borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const empresa = top[elements[0].index];
+        const input = document.getElementById('ref-empresa');
+        if (input) { input.value = empresa.nombre; searchEmpresa(); }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const e = top[ctx.dataIndex];
+          let tip = formatCurrency(ctx.raw) + ' (' + e.contratos + ' contratos)';
+          if (e.tipo_sociedad) tip += '\nTipo: ' + e.tipo_sociedad;
+          if (e.tamaño_estimado) tip += ' | Tamaño: ' + e.tamaño_estimado;
+          if (e.es_pyme) tip += ' [PYME]';
+          return tip;
+        } } }
+      },
+      scales: {
+        x: { ticks: { color: c.text, callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1e3).toFixed(0)+'k' }, grid: { color: c.grid } },
+        y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+async function searchEmpresa() {
+  const input = document.getElementById('ref-empresa')?.value?.trim() || '';
+  const impMin = document.getElementById('ref-imp-min')?.value || '';
+  const impMax = document.getElementById('ref-imp-max')?.value || '';
+  const tipo = document.getElementById('ref-tipo')?.value || '';
+  
+  const ministerio = document.getElementById('ref-ministerio')?.value || '';
+  
+  if (!input && !impMin && !impMax && !tipo && !ministerio) {
+    document.getElementById('empresa-results').innerHTML = '<p class="text-sm text-slate-500 p-4">Introduzca al menos un criterio de búsqueda.</p>';
+    return;
+  }
+  
+  // Detect if input looks like a NIF/CIF (letter+digits or digits+letter)
+  const isNif = /^[A-Za-z]\d{7,8}[A-Za-z0-9]?$/.test(input) || /^\d{8}[A-Za-z]$/.test(input);
+  const params = { tipo, pagina: 1, por_pagina: 50 };
+  if (isNif) { params.nif = input.toUpperCase(); } else if (input) { params.empresa = input; }
+  if (impMin) params.importe_min = impMin;
+  if (impMax) params.importe_max = impMax;
+  if (ministerio) params.departamento = ministerio;
+  const dateRange = _yearMonthToDateRange('ref-year', 'ref-month');
+  if (dateRange.fecha_desde) params.fecha_desde = dateRange.fecha_desde;
+  if (dateRange.fecha_hasta) params.fecha_hasta = dateRange.fecha_hasta;
+  
+  const data = await loadLicitaciones(params);
+  const container = document.getElementById('empresa-results');
+  
+  if (!data?.licitaciones?.length) {
+    container.innerHTML = '<div class="p-8 text-center text-slate-500 bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark"><span class="material-symbols-outlined text-3xl mb-2 block">search_off</span><p>No se encontraron resultados para estos criterios</p></div>';
+    return;
+  }
+  
+  // Summary of results
+  const totalImporte = data.licitaciones.reduce((s, l) => s + (l.importe || 0), 0);
+  const adjudicatarios = [...new Set(data.licitaciones.filter(l => l.adjudicatario).map(l => l.adjudicatario))];
+  const departamentos = [...new Set(data.licitaciones.map(l => l.organo_contratacion))];
+  const pymes = data.licitaciones.filter(l => l.es_pyme);
+  
+  // Build company info cards from unique adjudicatarios
+  const empresaMap = {};
+  data.licitaciones.forEach(l => {
+    if (!l.adjudicatario) return;
+    if (!empresaMap[l.adjudicatario]) {
+      empresaMap[l.adjudicatario] = { nif: l.nif_adjudicatario, es_pyme: l.es_pyme, contratos: 0, importe: 0, fechaMin: l.fecha_publicacion, fechaMax: l.fecha_publicacion, ofertas_mayor: [], ofertas_menor: [] };
+    }
+    empresaMap[l.adjudicatario].contratos++;
+    empresaMap[l.adjudicatario].importe += l.importe || 0;
+    if (l.fecha_publicacion < empresaMap[l.adjudicatario].fechaMin) empresaMap[l.adjudicatario].fechaMin = l.fecha_publicacion;
+    if (l.fecha_publicacion > empresaMap[l.adjudicatario].fechaMax) empresaMap[l.adjudicatario].fechaMax = l.fecha_publicacion;
+    if (l.oferta_mayor) empresaMap[l.adjudicatario].ofertas_mayor.push(l.oferta_mayor);
+    if (l.oferta_menor) empresaMap[l.adjudicatario].ofertas_menor.push(l.oferta_menor);
+  });
+
+  // NIF-based classification (frontend)
+  const nifTipos = {'A':'S.A.','B':'S.L.','C':'S.Col.','D':'S.Com.','E':'C.B.','F':'Coop.','G':'Asoc.','H':'C.Prop.','J':'S.Civ.','N':'Extranjera','P':'Corp.Local','Q':'Org.Público','R':'Religiosa','S':'Adm.Estado','U':'UTE','V':'Otro','W':'No residente'};
+
+  // Estimate approximate workers from contract volume, NIF letter and PYME status
+  function estimarTrabajadores(info) {
+    const letra = info.nif ? info.nif[0].toUpperCase() : '';
+    const imp = info.importe || 0;
+    const nc = info.contratos || 1;
+    const pyme = info.es_pyme;
+    // Personas físicas / autónomos
+    if (letra >= '0' && letra <= '9') return '~1 (autónomo)';
+    // Comunidad de bienes / sociedad civil
+    if (letra === 'E' || letra === 'J') return imp < 200000 ? '~2-3' : '~3-8';
+    // Cooperativa
+    if (letra === 'C' || letra === 'D') return imp < 500000 ? '~3-10' : '~10-30';
+    // UTE (temporal)
+    if (letra === 'U') return 'UTE (variable)';
+    // Asociación
+    if (letra === 'G') return imp < 100000 ? '~2-10' : imp < 1000000 ? '~10-30' : '~30-80';
+    // Organismos públicos
+    if ('PQRS'.includes(letra)) return 'Org. público';
+    // S.L. (B) y S.A. (A) — estimar por volumen de contratos
+    if (pyme) {
+      // PYME confirmada: <250 trabajadores
+      if (imp < 50000) return '~2-10';
+      if (imp < 200000) return '~5-25';
+      if (imp < 500000) return '~10-50';
+      if (imp < 2000000) return '~25-100';
+      if (imp < 5000000) return '~50-150';
+      return '~100-249';
+    }
+    // No PYME (gran empresa)
+    if (letra === 'A') {
+      if (imp < 1000000) return '~50-200';
+      if (imp < 10000000) return '~200-1.000';
+      if (imp < 50000000) return '~500-3.000';
+      return '~1.000-10.000+';
+    }
+    // S.L. no PYME (raro pero posible)
+    if (imp < 500000) return '~10-50';
+    if (imp < 5000000) return '~50-250';
+    return '~250-1.000';
+  }
+
+  function clasificarTamaño(info) {
+    const letra = info.nif ? info.nif[0].toUpperCase() : '';
+    if (letra >= '0' && letra <= '9') return 'Autónomo';
+    if (info.es_pyme) {
+      if (info.importe < 50000) return 'Micro';
+      if (info.importe < 500000) return 'Pequeña';
+      if (info.importe < 2000000) return 'Mediana';
+      return 'PYME grande';
+    }
+    if (info.importe > 10000000) return 'Gran empresa';
+    return 'Mediana/Grande';
+  }
+
+  const empCards = Object.entries(empresaMap).sort((a,b) => b[1].importe - a[1].importe).slice(0, 6).map(([name, info]) => {
+    const letraNif = info.nif ? info.nif[0].toUpperCase() : '';
+    const tipoSoc = nifTipos[letraNif] || (letraNif >= '0' && letraNif <= '9' ? 'Persona física' : '—');
+    const tamEst = clasificarTamaño(info);
+    const trabEst = estimarTrabajadores(info);
+    // Earliest appearance in BOE as proxy for "creation year" (at least active since)
+    const activoDesde = info.fechaMin ? info.fechaMin.substring(0, 4) : '—';
+    const cardId = 'emp-card-' + name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    return `<div class="p-3 rounded-lg bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-primary text-base">business</span>
+        <span class="text-xs font-bold dark:text-white truncate" title="${name}">${truncate(name, 28)}</span>
+      </div>
+      <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+        <span class="text-slate-500">NIF/CIF:</span><span class="font-semibold dark:text-slate-300">${info.nif || '—'}</span>
+        <span class="text-slate-500">Tipo sociedad:</span><span class="font-semibold dark:text-slate-300">${tipoSoc}</span>
+        <span class="text-slate-500">Tamaño est.:</span><span class="font-semibold dark:text-slate-300">${tamEst}</span>
+        <span class="text-slate-500">Trab. est.:</span><span class="font-semibold dark:text-slate-300">${trabEst}</span>
+        <span class="text-slate-500">Activo desde:</span><span class="font-semibold dark:text-slate-300">${activoDesde}</span>
+        <span class="text-slate-500">Contratos:</span><span class="font-semibold dark:text-slate-300">${info.contratos}</span>
+        <span class="text-slate-500">Importe total:</span><span class="font-semibold text-emerald-500">${formatCurrency(info.importe)}</span>
+        ${info.ofertas_mayor.length > 0 ? `<span class="text-slate-500">Oferta mayor:</span><span class="font-semibold text-orange-500">${formatCurrency(Math.max(...info.ofertas_mayor))}</span>` : ''}
+        ${info.ofertas_menor.length > 0 ? `<span class="text-slate-500">Oferta menor:</span><span class="font-semibold text-blue-500">${formatCurrency(Math.min(...info.ofertas_menor))}</span>` : ''}
+        ${info.es_pyme ? '<span class="text-slate-500">PYME:</span><span class="font-bold text-purple-500">Sí</span>' : ''}
+      </div>
+      <div id="${cardId}" class="mt-2 border-t border-slate-200 dark:border-border-dark pt-1 text-[10px] text-slate-400 socios-slot" data-empresa="${escHtml(name)}">
+        <span class="material-symbols-outlined text-xs animate-spin">progress_activity</span> Cargando socios BORME...
+      </div>
+    </div>`;
+  }).join('');
+  
+  container.innerHTML = `
+    <div class="mb-4 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+      <p class="text-sm dark:text-white"><strong>${data.total}</strong> licitaciones encontradas · Importe total: <strong class="text-emerald-500">${formatCurrency(totalImporte)}</strong> · ${adjudicatarios.length} empresas · ${departamentos.length} departamentos</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+      ${empCards}
+    </div>
+    <p class="text-[10px] text-slate-400 mb-4 flex items-center gap-1"><span class="material-symbols-outlined text-xs">info</span>Trabajadores estimados por algoritmo propio basado en: tipo de sociedad (NIF/CIF), volumen de contratos públicos, estatus PYME y nº de adjudicaciones. Son <strong>aproximaciones orientativas</strong>; para datos exactos consultar Seguridad Social o BORME.</p>
+    <div id="empresa-search-table"></div>
+  `;
+  
+  renderLicitacionesTable('empresa-search-table', data);
+  
+  // Async: load socios from BORME for each empresa card
+  document.querySelectorAll('.socios-slot').forEach(async (slot) => {
+    const empresa = slot.dataset.empresa;
+    if (!empresa) return;
+    try {
+      const sociosData = await api('socios', { empresa });
+      if (!sociosData || !sociosData.personas || sociosData.personas.length === 0) {
+        slot.innerHTML = '<span class="text-slate-400 italic">Sin datos BORME disponibles</span>';
+        return;
+      }
+      const activos = sociosData.personas.filter(p => p.activo);
+      const inactivos = sociosData.personas.filter(p => !p.activo);
+      let html = '<div class="flex items-center gap-1 mb-1"><span class="material-symbols-outlined text-xs text-amber-500">group</span><span class="font-bold text-slate-600 dark:text-slate-300 text-[11px]">Socios/Cargos (BORME)</span></div>';
+      const renderPersona = (p) => {
+        const statusIcon = p.activo ? '✅' : '❌';
+        const cargos = p.cargos.slice(0, 3).join(', ');
+        return `<div class="flex items-start gap-1 py-0.5">
+          <span class="text-[10px]">${statusIcon}</span>
+          <div>
+            <span class="font-semibold text-slate-700 dark:text-slate-200">${escHtml(p.nombre)}</span>
+            <span class="text-slate-400 ml-1">${escHtml(cargos)}</span>
+            ${p.ultima_fecha ? `<span class="text-slate-300 ml-1">(${p.ultima_fecha.substring(0,7)})</span>` : ''}
+          </div>
+        </div>`;
+      };
+      activos.slice(0, 5).forEach(p => { html += renderPersona(p); });
+      if (inactivos.length > 0) {
+        html += `<details class="mt-0.5"><summary class="cursor-pointer text-slate-400 hover:text-slate-600">+${inactivos.length} cesado${inactivos.length>1?'s':''}</summary>`;
+        inactivos.slice(0, 5).forEach(p => { html += renderPersona(p); });
+        html += '</details>';
+      }
+      if (sociosData.total_personas > 10) {
+        html += `<span class="text-slate-400">...y ${sociosData.total_personas - 10} más</span>`;
+      }
+      slot.innerHTML = html;
+    } catch (e) {
+      slot.innerHTML = '<span class="text-slate-400 italic">Error cargando BORME</span>';
+    }
+  });
+}
+
+function clearRefSearch() {
+  ['ref-empresa','ref-imp-min','ref-imp-max','ref-tipo','ref-year','ref-month','ref-ministerio'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('empresa-results').innerHTML = '';
+}
+
+async function loadRefData() {
+  const minConf = document.getElementById('ref-confidence')?.value || '0.2';
+  const limit = document.getElementById('ref-limit')?.value || '50';
+  
+  const data = await loadReferencias({ min_confianza: minConf, limite: limit });
+  if (!data || !data.referencias) return;
+
+  const c = chartColors();
+
+  // Confidence distribution donut
+  const buckets = { 'Alta (≥70%)': 0, 'Media (40-70%)': 0, 'Baja (20-40%)': 0, 'Muy baja (<20%)': 0 };
+  data.referencias.forEach(r => {
+    const pct = r.confianza * 100;
+    if (pct >= 70) buckets['Alta (≥70%)']++;
+    else if (pct >= 40) buckets['Media (40-70%)']++;
+    else if (pct >= 20) buckets['Baja (20-40%)']++;
+    else buckets['Muy baja (<20%)']++;
+  });
+
+  if (chartInstances.refConf) chartInstances.refConf.destroy();
+  chartInstances.refConf = new Chart(document.getElementById('ref-confidence-chart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(buckets),
+      datasets: [{ data: Object.values(buckets), backgroundColor: ['#10b981', '#f59e0b', '#1978e5', '#64748b'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '55%',
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const bucketKeys = Object.keys(buckets);
+        const clicked = bucketKeys[elements[0].index];
+        const confSel = document.getElementById('ref-confidence');
+        if (confSel) {
+          if (clicked.includes('Alta')) confSel.value = '0.7';
+          else if (clicked.includes('Media')) confSel.value = '0.4';
+          else if (clicked.includes('Baja') && !clicked.includes('Muy')) confSel.value = '0.2';
+          else confSel.value = '';
+          loadRefData();
+        }
+      },
+      plugins: { legend: { position: 'bottom', labels: { color: c.text, font: { size: 10 }, padding: 8, usePointStyle: true } } }
+    }
+  });
+
+  // References table
+  const tc = document.getElementById('ref-table-container');
+  tc.innerHTML = `
+    <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white">Detalle de Referencias Cruzadas</h3>
+        <p class="text-xs text-slate-500">${data.total} correlaciones encontradas</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-border-dark">
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Documento BOE</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Licitación</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Tipo Relación</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Confianza</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Keywords</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+            ${data.referencias.map(r => `
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+                <td class="px-4 py-3 max-w-[200px]">
+                  <span class="text-sm font-bold dark:text-white block truncate" title="${r.documento_boe_titulo}">${truncate(r.documento_boe_titulo, 45)}</span>
+                  <span class="text-xs text-slate-500">${r.documento_boe_id}</span>
+                </td>
+                <td class="px-4 py-3 max-w-[200px]">
+                  <span class="text-sm font-bold dark:text-white block truncate" title="${r.licitacion_titulo || ''}">${truncate(r.licitacion_titulo || '—', 45)}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
+                    r.confianza >= 0.7 ? 'bg-emerald-500/10 text-emerald-400' :
+                    r.confianza >= 0.4 ? 'bg-amber-500/10 text-amber-400' :
+                    'bg-primary/10 text-primary'
+                  }">${r.tipo_relacion}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <div class="w-16 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div class="h-full rounded-full ${r.confianza >= 0.7 ? 'bg-emerald-500' : r.confianza >= 0.4 ? 'bg-amber-500' : 'bg-primary'}" style="width:${(r.confianza * 100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500">${(r.confianza * 100).toFixed(0)}%</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    ${(r.keywords_comunes || []).slice(0, 3).map(k => `<span class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-bold text-slate-500">${k}</span>`).join('')}
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── SHARED TABLE RENDERERS ──────────────────────────────────
+
+async function renderDocumentosTable(containerId, params = {}) {
+  const data = await loadDocumentos(params);
+  if (data) renderDocumentosTableHTML(containerId, data);
+}
+
+function renderDocumentosTableHTML(containerId, data, paginateFn = null) {
+  const c = document.getElementById(containerId);
+  if (!data || !data.documentos?.length) {
+    c.innerHTML = '<div class="p-12 text-center text-slate-500 bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark"><span class="material-symbols-outlined text-4xl mb-2 block">inbox</span><p>No se encontraron documentos. Los datos se están cargando o no hay resultados para los filtros aplicados.</p></div>';
+    return;
+  }
+
+  const pagFn = paginateFn || 'quickSearchPage';
+
+  c.innerHTML = `
+    <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-2xl overflow-hidden shadow-sm fade-in">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-border-dark">
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Tipo</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Título / Descripción</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Departamento</th>
+              <th class="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Docs</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+            ${data.documentos.map(d => `
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+                <td class="px-4 py-3"><span class="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${formatDate(d.fecha)}</span></td>
+                <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase ${tipoBadgeClass(d.tipo)}">${d.tipo}</span></td>
+                <td class="px-4 py-3 max-w-md">
+                  ${d.url_html ? `<a href="${d.url_html}" target="_blank" class="text-sm font-bold text-slate-900 dark:text-white hover:text-primary transition-colors block truncate">${truncate(d.titulo, 70)}</a>` : `<span class="text-sm font-bold text-slate-900 dark:text-white block truncate">${truncate(d.titulo, 70)}</span>`}
+                  <p class="text-xs text-slate-500 mt-0.5">Ref: ${d.referencia || d.id}</p>
+                </td>
+                <td class="px-4 py-3"><span class="text-sm text-slate-600 dark:text-slate-400 block truncate max-w-[180px]" title="${d.departamento}">${truncate(d.departamento, 30)}</span></td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex justify-end gap-1">
+                    ${d.url_pdf ? `<a href="${d.url_pdf}" target="_blank" class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-red-500" title="PDF"><span class="material-symbols-outlined">picture_as_pdf</span></a>` : ''}
+                    ${d.url_html ? `<a href="${d.url_html}" target="_blank" class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary" title="HTML"><span class="material-symbols-outlined">open_in_new</span></a>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Página ${data.pagina} de ${data.total_paginas} · ${formatNumber(data.total)} publicaciones</span>
+        <div class="flex gap-2">
+          <button onclick="${pagFn}(${data.pagina - 1})" ${data.pagina <= 1 ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button onclick="${pagFn}(${data.pagina + 1})" ${data.pagina >= data.total_paginas ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function quickSearch() {
+  const texto = document.getElementById('quick-search')?.value || '';
+  if (texto.length < 2 && texto.length > 0) return;
+  const data = await loadDocumentos({ texto, pagina: 1, por_pagina: 15 });
+  if (data) renderDocumentosTableHTML('recent-table-container', data);
+}
+
+async function quickSearchPage(page) {
+  const texto = document.getElementById('quick-search')?.value || '';
+  const data = await loadDocumentos({ texto, pagina: page, por_pagina: 15 });
+  if (data) renderDocumentosTableHTML('recent-table-container', data);
+}
+
+// ─── PAGE: SUBVENCIONES ──────────────────────────────────────
+
+async function loadSubvenciones(params = {}) {
+  return await api('subvenciones', params);
+}
+
+async function loadSubvencionesBuscar(params = {}) {
+  return await api('subvenciones-buscar', params);
+}
+
+async function renderSubvenciones(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Subvenciones Públicas (BDNS)</h2>
+      <p class="text-sm text-slate-500">Monitorización de convocatorias de subvenciones del Sistema Nacional de Publicidad de Subvenciones. Datos de la Base de Datos Nacional de Subvenciones.</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8" id="bdns-kpis">
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-emerald-500/10"><span class="material-symbols-outlined text-emerald-500 text-lg">volunteer_activism</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Convocatorias</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-total">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate" id="bdns-range-info"></p>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-primary/10"><span class="material-symbols-outlined text-primary text-lg">flag</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Estatales</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-estatal">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1">Gobierno central</p>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-amber-500/10"><span class="material-symbols-outlined text-amber-500 text-lg">map</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Autonómicas</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-autonomico">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate">CC.AA.</p>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-purple-500/10"><span class="material-symbols-outlined text-purple-500 text-lg">location_city</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Locales</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-local">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate">Ayuntamientos</p>
+      </div>
+    </div>
+
+    <!-- Charts Row 1: Sector + Nivel -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Subvenciones por Sector</h3>
+        <p class="text-xs text-slate-500 mb-4">Salud, educación, industria, medio ambiente...</p>
+        <div class="chart-container" style="height:320px"><canvas id="chart-bdns-sector"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Subvenciones por Nivel de Gobierno</h3>
+        <p class="text-xs text-slate-500 mb-4">Distribución estatal, autonómico y local</p>
+        <div class="chart-container" style="height:320px"><canvas id="chart-bdns-nivel"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2: Destino General + Destinos Internacionales -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Destino de las Subvenciones</h3>
+        <p class="text-xs text-slate-500 mb-4">Distribución general: España vs Internacional</p>
+        <div class="chart-container" style="height:360px"><canvas id="chart-bdns-destino"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">🌍 Destinos Internacionales</h3>
+        <p class="text-xs text-slate-500 mb-4">Países y regiones — clic en barra para ver detalle</p>
+        <div class="chart-container" style="height:360px"><canvas id="chart-bdns-destino-intl"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Detail panel for international destinations -->
+    <div id="destino-intl-detalle" class="mb-8 hidden">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold dark:text-white"><span id="destino-intl-titulo">Convocatorias</span> <span id="destino-intl-count" class="text-sm font-normal text-slate-500"></span></h3>
+          <button onclick="document.getElementById('destino-intl-detalle').classList.add('hidden')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button>
+        </div>
+        <div id="destino-intl-lista" class="space-y-2 max-h-96 overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <!-- Generic detail panel for chart drilldown -->
+    <div id="chart-detalle-panel" class="mb-8 hidden">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold dark:text-white"><span id="chart-detalle-titulo">Convocatorias</span> <span id="chart-detalle-count" class="text-sm font-normal text-slate-500"></span></h3>
+          <button onclick="document.getElementById('chart-detalle-panel').classList.add('hidden')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button>
+        </div>
+        <div id="chart-detalle-lista" class="space-y-2 max-h-96 overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 3: Departamento -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Top Departamentos / Organismos</h3>
+        <p class="text-xs text-slate-500 mb-4">Entidades que más subvenciones convocan</p>
+        <div class="chart-container" style="height:360px"><canvas id="chart-bdns-organo"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 4: Timeline + Entidades -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Evolución Mensual</h3>
+        <p class="text-xs text-slate-500 mb-4">Número de convocatorias por mes</p>
+        <div class="chart-container" style="height:280px"><canvas id="chart-bdns-timeline"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Entidades con más convocatorias</h3>
+        <p class="text-xs text-slate-500 mb-4">Comunidades Autónomas, ministerios y municipios</p>
+        <div class="chart-container" style="height:280px"><canvas id="chart-bdns-entidad"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Search / Filters -->
+    <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+      <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Buscar Subvenciones</h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Texto</label>
+          <input id="bdns-texto" onkeydown="if(event.key==='Enter')searchSubvenciones()" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm" placeholder="Palabra clave..." type="text"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nivel</label>
+          <select id="bdns-nivel" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            <option value="ESTADO">Estatal</option>
+            <option value="AUTONOMICA">Autonómico</option>
+            <option value="LOCAL">Local</option>
+            <option value="OTROS">Otros</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Sector</label>
+          <select id="bdns-sector" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+            <option value="">Todos</option>
+            <option>Salud y Sanidad</option><option>Educación</option><option>Cultura y Deporte</option>
+            <option>Vivienda</option><option>Medio Ambiente</option><option>Agricultura y Ganadería</option>
+            <option>Industria y Comercio</option><option>Transporte e Infraestructuras</option>
+            <option>Empleo y Asuntos Sociales</option><option>Seguridad y Defensa</option>
+            <option>Justicia</option><option>Cooperación Internacional</option><option>Digitalización</option>
+            <option>Otros</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Año</label>
+            <select id="bdns-year" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildYearOptions()}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Mes</label>
+            <select id="bdns-month" class="w-full py-2.5 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg text-sm">
+              <option value="">Todos</option>
+              ${_buildMonthOptions()}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="searchSubvenciones()" class="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+          <span class="material-symbols-outlined">search</span> Buscar
+        </button>
+        <button onclick="clearSubvSearch()" class="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2">
+          <span class="material-symbols-outlined">clear_all</span> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <div id="bdns-table-container"></div>
+  `;
+
+  // Load data
+  const data = await loadSubvenciones();
+  if (data) renderBDNSCharts(data);
+}
+
+function renderBDNSCharts(data) {
+  if (!data) return;
+  const c = chartColors();
+
+  // KPIs
+  document.getElementById('bdns-total').textContent = formatNumber(data.total_convocatorias);
+  document.getElementById('bdns-range-info').textContent =
+    data.fecha_min && data.fecha_max ? `${data.fecha_min} → ${data.fecha_max}` : 'Sin datos';
+  document.getElementById('bdns-estatal').textContent = formatNumber(data.por_nivel?.ESTATAL || 0);
+  document.getElementById('bdns-autonomico').textContent = formatNumber(data.por_nivel?.AUTONOMICO || 0);
+  document.getElementById('bdns-local').textContent = formatNumber(data.por_nivel?.LOCAL || 0);
+
+  const palette = ['#1978e5','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#a855f7','#0ea5e9','#d946ef'];
+
+  // Sector chart (doughnut) — clickable
+  if (data.por_sector) {
+    const entries = Object.entries(data.por_sector).slice(0, 14);
+    if (chartInstances.bdnsSector) chartInstances.bdnsSector.destroy();
+    chartInstances.bdnsSector = new Chart(document.getElementById('chart-bdns-sector'), {
+      type: 'doughnut',
+      data: {
+        labels: entries.map(e => e[0]),
+        datasets: [{ data: entries.map(e => e[1]), backgroundColor: palette, borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        onClick: (evt, elements) => { if (elements.length) showChartDetalle('sector', entries[elements[0].index][0]); },
+        plugins: {
+          legend: { position: 'right', labels: { color: c.text, font: { size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} (${(ctx.raw / data.total_convocatorias * 100).toFixed(1)}%)`, afterLabel: () => '(clic para ver detalle)' } }
+        }
+      }
+    });
+  }
+
+  // Nivel chart (pie) — clickable, fixed labels
+  if (data.por_nivel) {
+    const entries = Object.entries(data.por_nivel);
+    const nivelNames = { ESTADO: 'Estatal', ESTATAL: 'Estatal', AUTONOMICA: 'Autonómico', AUTONOMICO: 'Autonómico', LOCAL: 'Local', OTROS: 'Otros' };
+    const nivelColors = { ESTADO: '#1978e5', ESTATAL: '#1978e5', AUTONOMICA: '#f59e0b', AUTONOMICO: '#f59e0b', LOCAL: '#10b981', OTROS: '#94a3b8' };
+    if (chartInstances.bdnsNivel) chartInstances.bdnsNivel.destroy();
+    chartInstances.bdnsNivel = new Chart(document.getElementById('chart-bdns-nivel'), {
+      type: 'pie',
+      data: {
+        labels: entries.map(e => nivelNames[e[0]] || e[0]),
+        datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => nivelColors[e[0]] || '#64748b'), borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        onClick: (evt, elements) => { if (elements.length) showChartDetalle('nivel', entries[elements[0].index][0]); },
+        plugins: {
+          legend: { position: 'bottom', labels: { color: c.text, font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} (${(ctx.raw / data.total_convocatorias * 100).toFixed(1)}%)`, afterLabel: () => '(clic para ver detalle)' } }
+        }
+      }
+    });
+  }
+
+  // Destino chart (horizontal bar) — clickable
+  if (data.por_destino) {
+    const entries = Object.entries(data.por_destino).slice(0, 15);
+    if (chartInstances.bdnsDestino) chartInstances.bdnsDestino.destroy();
+    chartInstances.bdnsDestino = new Chart(document.getElementById('chart-bdns-destino'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => truncate(e[0], 30)),
+        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: palette, borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showChartDetalle('destino', entries[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // International destinations chart (horizontal bar - only non-España entries)
+  if (data.por_destino_intl) {
+    const entries = Object.entries(data.por_destino_intl).sort((a,b) => b[1] - a[1]).slice(0, 20);
+    const intlPalette = ['#ef4444','#f97316','#eab308','#22c55e','#14b8a6','#0ea5e9','#6366f1','#a855f7','#ec4899','#f43f5e','#fb923c','#facc15','#4ade80','#2dd4bf','#38bdf8','#818cf8','#c084fc','#f472b6','#fb7185','#fbbf24'];
+    if (chartInstances.bdnsDestinoIntl) chartInstances.bdnsDestinoIntl.destroy();
+    chartInstances.bdnsDestinoIntl = new Chart(document.getElementById('chart-bdns-destino-intl'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => e[0]),
+        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: intlPalette, borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => {
+          if (elements.length > 0) {
+            const idx = elements[0].index;
+            const destName = entries[idx][0];
+            showDestinoIntlDetalle(destName);
+          }
+        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 10 }, cursor: 'pointer' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Organo chart (horizontal bar) — clickable
+  if (data.por_organo) {
+    const entries = Object.entries(data.por_organo).slice(0, 12);
+    if (chartInstances.bdnsOrgano) chartInstances.bdnsOrgano.destroy();
+    chartInstances.bdnsOrgano = new Chart(document.getElementById('chart-bdns-organo'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => truncate(e[0], 35)),
+        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: '#1978e5', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showChartDetalle('organo', entries[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Timeline chart (bar by month) — clickable
+  if (data.por_mes) {
+    const entries = Object.entries(data.por_mes);
+    const meses = { '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic' };
+    if (chartInstances.bdnsTimeline) chartInstances.bdnsTimeline.destroy();
+    chartInstances.bdnsTimeline = new Chart(document.getElementById('chart-bdns-timeline'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => { const [y, m] = e[0].split('-'); return (meses[m] || m) + ' ' + y; }),
+        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: '#06b6d4', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        onClick: (evt, elements) => { if (elements.length) showChartDetalle('mes', entries[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        scales: {
+          x: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: c.text }, grid: { color: c.grid } }
+        }
+      }
+    });
+  }
+
+  // Entidad chart (horizontal bar) — clickable
+  if (data.por_entidad) {
+    const entries = Object.entries(data.por_entidad).slice(0, 12);
+    if (chartInstances.bdnsEntidad) chartInstances.bdnsEntidad.destroy();
+    chartInstances.bdnsEntidad = new Chart(document.getElementById('chart-bdns-entidad'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => truncate(e[0], 28)),
+        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: '#8b5cf6', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) showChartDetalle('entidad', entries[elements[0].index][0]); },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+async function searchSubvenciones(page = 1) {
+  const texto = document.getElementById('bdns-texto')?.value || '';
+  const nivel = document.getElementById('bdns-nivel')?.value || '';
+  const sector = document.getElementById('bdns-sector')?.value || '';
+  const params = { texto, nivel, sector, pagina: page, por_pagina: 20 };
+  const dateRange = _yearMonthToDateRange('bdns-year', 'bdns-month');
+  if (dateRange.fecha_desde) params.fecha_desde = dateRange.fecha_desde;
+  if (dateRange.fecha_hasta) params.fecha_hasta = dateRange.fecha_hasta;
+
+  const data = await loadSubvencionesBuscar(params);
+  renderSubvencionesTable('bdns-table-container', data);
+}
+
+function clearSubvSearch() {
+  ['bdns-texto','bdns-nivel','bdns-sector','bdns-year','bdns-month'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('bdns-table-container').innerHTML = '';
+}
+
+// Cache for destino detail data
+let _destinoIntlCache = null;
+
+async function showDestinoIntlDetalle(destName) {
+  const panel = document.getElementById('destino-intl-detalle');
+  const titulo = document.getElementById('destino-intl-titulo');
+  const count = document.getElementById('destino-intl-count');
+  const lista = document.getElementById('destino-intl-lista');
+  if (!panel || !lista) return;
+
+  panel.classList.remove('hidden');
+  titulo.textContent = destName;
+  lista.innerHTML = '<div class="text-center py-4"><div class="animate-spin inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"></div><p class="text-sm text-slate-500 mt-2">Cargando convocatorias...</p></div>';
+
+  try {
+    if (!_destinoIntlCache) {
+      _destinoIntlCache = await api('subvenciones-destino-detalle');
+    }
+    const destinos = _destinoIntlCache.destinos || [];
+    const dest = destinos.find(d => d.nombre === destName);
+    if (!dest || dest.convocatorias.length === 0) {
+      lista.innerHTML = '<p class="text-slate-500 text-sm">No hay convocatorias para este destino.</p>';
+      count.textContent = '';
+      return;
+    }
+    count.textContent = `(${dest.total} convocatorias)`;
+    lista.innerHTML = dest.convocatorias.map(c => `
+      <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex justify-between items-start gap-2">
+          <a href="${c.url}" target="_blank" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex-1 break-words">${escHtml(c.descripcion)}</a>
+          <span class="text-xs text-slate-500 whitespace-nowrap">${c.fecha || ''}</span>
+        </div>
+        <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+          <span>${escHtml(c.organo || c.entidad || '')}</span>
+          <span class="text-slate-300">|</span>
+          <span>BDNS: ${c.numero}</span>
+        </div>
+      </div>
+    `).join('');
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    lista.innerHTML = '<p class="text-red-500 text-sm">Error al cargar detalle.</p>';
+  }
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Generic chart drilldown — works for sector, nivel, destino, organo, entidad, mes
+async function showChartDetalle(campo, valor) {
+  const panel = document.getElementById('chart-detalle-panel');
+  const titulo = document.getElementById('chart-detalle-titulo');
+  const count = document.getElementById('chart-detalle-count');
+  const lista = document.getElementById('chart-detalle-lista');
+  if (!panel || !lista) return;
+
+  const campoLabels = { sector:'Sector', nivel:'Nivel', destino:'Destino', organo:'Órgano', entidad:'Entidad', mes:'Mes' };
+  const nivelNames = { ESTADO:'Estatal', AUTONOMICA:'Autonómico', LOCAL:'Local', OTROS:'Otros' };
+  const displayValor = campo === 'nivel' ? (nivelNames[valor] || valor) : valor;
+
+  panel.classList.remove('hidden');
+  titulo.textContent = `${campoLabels[campo] || campo}: ${displayValor}`;
+  count.textContent = '';
+  lista.innerHTML = '<div class="text-center py-4"><div class="animate-spin inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"></div><p class="text-sm text-slate-500 mt-2">Cargando convocatorias...</p></div>';
+
+  try {
+    const data = await api('subvenciones-chart-detalle', { campo, valor });
+    if (!data) throw new Error('Sin respuesta del servidor');
+    const convocatorias = data.convocatorias || [];
+    if (convocatorias.length === 0) {
+      lista.innerHTML = '<p class="text-slate-500 text-sm">No hay convocatorias para esta categoría.</p>';
+      return;
+    }
+    count.textContent = `(${data.total || convocatorias.length} convocatorias)`;
+    lista.innerHTML = convocatorias.slice(0, 100).map(c => `
+      <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex justify-between items-start gap-2">
+          <a href="${c.url}" target="_blank" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex-1 break-words">${escHtml(c.descripcion)}</a>
+          <span class="text-xs text-slate-500 whitespace-nowrap">${c.fecha || ''}</span>
+        </div>
+        <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+          <span>${escHtml(c.organo || c.entidad || '')}</span>
+          <span class="text-slate-300">|</span>
+          <span>BDNS: ${c.numero}</span>
+        </div>
+      </div>
+    `).join('') + (convocatorias.length > 100 ? `<p class="text-center text-sm text-slate-500 py-2">Mostrando 100 de ${convocatorias.length} convocatorias</p>` : '');
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    lista.innerHTML = '<p class="text-red-500 text-sm">Error al cargar detalle: ' + escHtml(e.message) + '</p>';
+  }
+}
+
+function renderSubvencionesTable(containerId, data) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  if (!data?.convocatorias?.length) {
+    c.innerHTML = '<div class="p-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2 block">search_off</span><p>No se encontraron subvenciones</p></div>';
+    return;
+  }
+
+  c.innerHTML = `
+    <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-2xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-border-dark">
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Nivel</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500" style="min-width:320px">Descripción</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500" style="min-width:180px">Órgano</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Sector</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Destino</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+            ${data.convocatorias.map(s => {
+              const nivelBg = s.nivel === 'ESTATAL' ? 'bg-primary/10 text-primary' : s.nivel === 'AUTONOMICO' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500';
+              const nivelLabel = s.nivel === 'ESTATAL' ? 'Estatal' : s.nivel === 'AUTONOMICO' ? 'Autonómico' : 'Local';
+              return `<tr class="hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+                <td class="px-3 py-3"><span class="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${formatDate(s.fecha)}</span></td>
+                <td class="px-3 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase ${nivelBg}">${nivelLabel}</span>
+                  ${s.mrr ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-500 ml-1">MRR</span>' : ''}</td>
+                <td class="px-3 py-3"><span class="text-sm dark:text-white block" title="${s.descripcion}">${truncate(s.descripcion, 90)}</span></td>
+                <td class="px-3 py-3"><span class="text-xs text-slate-600 dark:text-slate-400 block" title="${s.organo || ''}">${truncate(s.organo || '—', 30)}</span></td>
+                <td class="px-3 py-3"><span class="text-xs font-semibold text-slate-600 dark:text-slate-400">${s.sector || '—'}</span></td>
+                <td class="px-3 py-3"><span class="text-xs text-slate-500">${truncate(s.destino || '—', 22)}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 uppercase tracking-widest">Página ${data.pagina} de ${data.total_paginas} · ${data.total} resultados</span>
+        <div class="flex gap-2">
+          <button onclick="searchSubvenciones(${data.pagina - 1})" ${data.pagina <= 1 ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button onclick="searchSubvenciones(${data.pagina + 1})" ${data.pagina >= data.total_paginas ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 transition-colors disabled:opacity-30">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── LEGAL PAGES ─────────────────────────────────────────────
+
+function renderAvisoLegal(container) {
+  container.innerHTML = `
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-6">Aviso Legal</h2>
+      <div class="prose dark:prose-invert prose-slate max-w-none space-y-6 text-sm text-slate-600 dark:text-slate-400">
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">1. Titular del sitio web</h3>
+          <p>Este sitio web, <strong>BOE Explorer</strong> (accesible en <em>test.pro-eurtec.com</em>), es un proyecto independiente de análisis de datos públicos sin ánimo de lucro. No está afiliado ni patrocinado por ningún organismo gubernamental.</p>
+          <div class="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <p class="text-sm"><strong>Titular:</strong> Víctor Benítez Medina</p>
+            <p class="text-sm"><strong>NIE:</strong> Y8560379T</p>
+          </div>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">2. Objeto y finalidad</h3>
+          <p>BOE Explorer tiene como único objetivo facilitar el acceso ciudadano a datos públicos ya publicados en fuentes oficiales abiertas. La plataforma agrega, indexa y visualiza información del <strong>Boletín Oficial del Estado (BOE)</strong> y del <strong>Sistema Nacional de Publicidad de Subvenciones (BDNS)</strong>, permitiendo búsquedas, filtrados y análisis estadísticos de dichos datos.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">3. Naturaleza de los datos</h3>
+          <p>Toda la información mostrada procede de <strong>APIs públicas y abiertas</strong> proporcionadas por organismos oficiales del Estado español. Los datos son de carácter público conforme a la <strong>Ley 19/2013 de Transparencia</strong> y la normativa de reutilización de información del sector público. BOE Explorer no genera, modifica ni altera la información original.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">4. Exclusión de responsabilidad</h3>
+          <ul class="list-disc pl-5 space-y-2">
+            <li>La información se proporciona <strong>"tal cual"</strong>, sin garantía de exactitud, integridad o actualidad.</li>
+            <li>El titular no se responsabiliza de errores, omisiones o discrepancias respecto a las fuentes originales.</li>
+            <li>Los análisis estadísticos y cruces de datos son orientativos y <strong>no constituyen asesoramiento legal, financiero ni de ningún otro tipo</strong>.</li>
+            <li>Para información oficial y vinculante, consulte siempre las fuentes originales: <a href="https://www.boe.es" target="_blank" class="text-primary hover:underline">boe.es</a> y <a href="https://www.pap.hacienda.gob.es/bdnstrans/" target="_blank" class="text-primary hover:underline">BDNS</a>.</li>
+          </ul>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">5. Propiedad intelectual</h3>
+          <p>El diseño, código fuente y estructura de BOE Explorer son propiedad de su creador. Los datos mostrados pertenecen a sus respectivos organismos emisores y se utilizan bajo las condiciones de reutilización de información del sector público.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">6. Legislación aplicable</h3>
+          <p>Este aviso legal se rige por la legislación española. Para cualquier controversia serán competentes los juzgados y tribunales que correspondan conforme a la normativa vigente.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPrivacidad(container) {
+  container.innerHTML = `
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-6">Política de Privacidad</h2>
+      <div class="prose dark:prose-invert prose-slate max-w-none space-y-6 text-sm text-slate-600 dark:text-slate-400">
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">1. Responsable del tratamiento</h3>
+          <p><strong>BOE Explorer</strong> — Proyecto independiente de análisis de datos públicos.</p>
+          <div class="mt-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <p class="text-sm"><strong>Responsable:</strong> Víctor Benítez Medina</p>
+            <p class="text-sm"><strong>NIE:</strong> Y8560379T</p>
+            <p class="text-sm"><strong>Contacto:</strong> A través del formulario disponible en el sitio web.</p>
+          </div>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">2. Datos que recopilamos</h3>
+          <p>Este sitio web <strong>NO recopila datos personales</strong> de los visitantes. No se requiere registro, no se solicitan datos de contacto y no se procesan datos personales de ningún tipo.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">3. Cookies y análisis</h3>
+          <p>Utilizamos <strong>Matomo Analytics</strong> (alojado en nuestros propios servidores) para obtener estadísticas de uso agregadas y anónimas. Matomo:</p>
+          <ul class="list-disc pl-5 space-y-2 mt-2">
+            <li>Está configurado para <strong>respetar la señal "Do Not Track"</strong> del navegador.</li>
+            <li><strong>No comparte datos con terceros</strong>.</li>
+            <li>Anonimiza las direcciones IP.</li>
+            <li>Los datos se almacenan en servidores europeos bajo nuestra custodia.</li>
+          </ul>
+          <p class="mt-3">Puede rechazar el uso de cookies de análisis mediante el banner de consentimiento. Si lo rechaza, Matomo no registrará su visita.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">4. Cookies técnicas</h3>
+          <p>Se utiliza <code class="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">localStorage</code> del navegador para:</p>
+          <ul class="list-disc pl-5 space-y-2 mt-2">
+            <li>Recordar la preferencia de tema (claro/oscuro).</li>
+            <li>Recordar la aceptación del banner de cookies.</li>
+          </ul>
+          <p class="mt-3">Estos datos permanecen exclusivamente en el dispositivo del usuario y no se transmiten a ningún servidor.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">5. Datos de terceros mostrados</h3>
+          <p>Los datos de empresas, NIFs, adjudicatarios y organismos públicos que se muestran en la plataforma son <strong>datos públicos</strong> publicados por organismos oficiales españoles en cumplimiento de la <strong>Ley 19/2013 de Transparencia</strong> y la normativa de contratación pública. Su tratamiento está amparado por el interés legítimo de transparencia ciudadana y la reutilización de información del sector público (Ley 37/2007).</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">6. Derechos</h3>
+          <p>Conforme al RGPD y la LOPDGDD, puede ejercer sus derechos de acceso, rectificación, supresión, limitación y portabilidad contactando con nosotros. Dado que no recopilamos datos personales de visitantes, estos derechos aplican exclusivamente a los datos públicos mostrados en la plataforma.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAtribucion(container) {
+  container.innerHTML = `
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-6">Atribución de Datos</h2>
+      <div class="prose dark:prose-invert prose-slate max-w-none space-y-6 text-sm text-slate-600 dark:text-slate-400">
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">Fuentes de datos oficiales</h3>
+          <p>BOE Explorer obtiene toda su información de fuentes gubernamentales abiertas. A continuación se detallan las fuentes y sus condiciones de uso:</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-primary/10"><span class="material-symbols-outlined text-primary">article</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Boletín Oficial del Estado (BOE)</h3>
+              <p class="text-xs text-slate-500">Agencia Estatal Boletín Oficial del Estado</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>API utilizada:</strong> <a href="https://www.boe.es/datosabiertos/" target="_blank" class="text-primary hover:underline">BOE Datos Abiertos</a></li>
+            <li><strong>Datos obtenidos:</strong> Sumarios diarios del BOE (todas las secciones), documentos individuales con metadatos (importes, adjudicatarios, NIFs, CPVs, procedimientos).</li>
+            <li><strong>Licencia:</strong> Los datos del BOE son de dominio público y se ofrecen bajo condiciones de reutilización de la información del sector público conforme a la Ley 37/2007.</li>
+            <li><strong>Frecuencia de actualización:</strong> Diaria a las 20:00 CET.</li>
+          </ul>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-emerald-500/10"><span class="material-symbols-outlined text-emerald-500">payments</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Sistema Nacional de Publicidad de Subvenciones (BDNS)</h3>
+              <p class="text-xs text-slate-500">Ministerio de Hacienda — Intervención General de la Administración del Estado</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>API utilizada:</strong> <a href="https://www.pap.hacienda.gob.es/bdnstrans/" target="_blank" class="text-primary hover:underline">BDNS Transparencia</a></li>
+            <li><strong>Datos obtenidos:</strong> Convocatorias de subvenciones, concesiones, importes y beneficiarios.</li>
+            <li><strong>Licencia:</strong> Datos públicos conforme a la Ley 38/2003 General de Subvenciones y la Base de Datos Nacional de Subvenciones (BDNS).</li>
+            <li><strong>Frecuencia de actualización:</strong> Diaria.</li>
+          </ul>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <h3 class="text-lg font-bold dark:text-white mb-3">Marco legal de reutilización</h3>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Ley 37/2007</strong>, de 16 de noviembre, sobre reutilización de la información del sector público.</li>
+            <li><strong>Real Decreto 1495/2011</strong>, de 24 de octubre, por el que se desarrolla la Ley 37/2007.</li>
+            <li><strong>Ley 19/2013</strong>, de 9 de diciembre, de transparencia, acceso a la información pública y buen gobierno.</li>
+            <li><strong>Directiva (UE) 2019/1024</strong> relativa a los datos abiertos y la reutilización de la información del sector público.</li>
+          </ul>
+        </div>
+
+
+      </div>
+    </div>
+  `;
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  checkStatus();
+  navigateTo('inicio');
+
+  // Periodic status check (every 5 min - data updates once/day)
+  setInterval(checkStatus, 300000);
+});
+
+// Add spin animation
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+
+// ─── COOKIE CONSENT ──────────────────────────────────────────
+
+function initCookieBanner() {
+  if (localStorage.getItem('boe_cookie_consent')) return;
+  const banner = document.getElementById('cookie-banner');
+  if (banner) banner.classList.remove('hidden');
+}
+
+function acceptCookies() {
+  localStorage.setItem('boe_cookie_consent', Date.now());
+  const banner = document.getElementById('cookie-banner');
+  if (banner) banner.classList.add('hidden');
+}
+
+function rejectCookies() {
+  // Disable Matomo tracking
+  window._paq = window._paq || [];
+  _paq.push(['optUserOut']);
+  localStorage.setItem('boe_cookie_consent', 'rejected');
+  const banner = document.getElementById('cookie-banner');
+  if (banner) banner.classList.add('hidden');
+}
+
+// Show cookie banner after DOM is ready
+document.addEventListener('DOMContentLoaded', initCookieBanner);
+</script>
+
+<!-- Cookie Consent Banner -->
+<div id="cookie-banner" class="hidden fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark shadow-2xl">
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+    <div class="flex-1">
+      <p class="text-sm text-slate-700 dark:text-slate-300">
+        <span class="font-bold">🍪 Uso de cookies:</span> Este sitio utiliza cookies técnicas y de análisis (Matomo) para mejorar la experiencia de usuario. No compartimos datos con terceros.
+        <a onclick="navigateTo('privacidad')" class="text-primary hover:underline cursor-pointer ml-1">Más información</a>
+      </p>
+    </div>
+    <div class="flex gap-3 shrink-0">
+      <button onclick="rejectCookies()" class="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+        Rechazar
+      </button>
+      <button onclick="acceptCookies()" class="px-6 py-2 text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors">
+        Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
