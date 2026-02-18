@@ -209,9 +209,10 @@ body { font-family: 'Inter', sans-serif; }
         <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-6">Fuentes de Datos</h4>
         <ul class="space-y-4">
           <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.boe.es/datosabiertos/" target="_blank">BOE Datos Abiertos</a></li>
-          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://contrataciondelestado.es" target="_blank">Contratación del Estado</a></li>
           <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.pap.hacienda.gob.es/bdnstrans/" target="_blank">BDNS Subvenciones</a></li>
-          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.boe.es" target="_blank">BOE Oficial</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.boe.es/diario_borme/" target="_blank">BORME</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://www.congreso.es/es/opendata" target="_blank">Congreso Open Data</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://contrataciondelestado.es" target="_blank">Contratación del Estado</a></li>
         </ul>
       </div>
       <div>
@@ -2597,11 +2598,23 @@ function renderBDNSCharts(data) {
       type: 'bar',
       data: {
         labels: entries.map(e => truncate(e[0], 30)),
-        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: palette, borderRadius: 4 }]
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: palette, borderRadius: 4, minBarLength: 8 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-        onClick: (evt, elements) => { if (elements.length) showChartDetalle('destino', entries[elements[0].index][0]); },
+        onClick: (evt, elements) => {
+          if (elements.length) { showChartDetalle('destino', entries[elements[0].index][0]); return; }
+          // Handle clicks near Y-axis labels for small bars
+          const chart = chartInstances.bdnsDestino;
+          if (!chart) return;
+          const rect = chart.canvas.getBoundingClientRect();
+          const y = evt.native ? evt.native.clientY - rect.top : evt.y;
+          const yScale = chart.scales.y;
+          for (let i = 0; i < entries.length; i++) {
+            const yPos = yScale.getPixelForValue(i);
+            if (Math.abs(y - yPos) < 14) { showChartDetalle('destino', entries[i][0]); return; }
+          }
+        },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } } },
         scales: {
           x: { ticks: { color: c.text, callback: v => fmtEur(v) }, grid: { color: c.grid } },
@@ -2621,15 +2634,30 @@ function renderBDNSCharts(data) {
       type: 'bar',
       data: {
         labels: entries.map(e => e[0]),
-        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: intlPalette, borderRadius: 4 }]
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: intlPalette, borderRadius: 4, minBarLength: 8 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         onClick: (evt, elements) => {
+          // If clicked directly on a bar element
           if (elements.length > 0) {
             const idx = elements[0].index;
             const destName = entries[idx][0];
             showDestinoIntlDetalle(destName);
+            return;
+          }
+          // Also handle clicks on Y-axis label area (small bars hard to click)
+          const chart = chartInstances.bdnsDestinoIntl;
+          if (!chart) return;
+          const rect = chart.canvas.getBoundingClientRect();
+          const y = evt.native ? evt.native.clientY - rect.top : evt.y;
+          const yScale = chart.scales.y;
+          for (let i = 0; i < entries.length; i++) {
+            const yPos = yScale.getPixelForValue(i);
+            if (Math.abs(y - yPos) < 14) {
+              showDestinoIntlDetalle(entries[i][0]);
+              return;
+            }
           }
         },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } } },
@@ -3965,44 +3993,278 @@ function renderTimelineContradicciones(data) {
 
 function renderPatrimonio(data, c) {
   const container = document.getElementById('patrimonio-container');
-  const patrimonio = data.patrimonio || [];
-  if (!container || patrimonio.length === 0) return;
+  const allPatrimonio = data.patrimonio || [];
+  if (!container || allPatrimonio.length === 0) return;
 
   const stats = data.stats_partidos || {};
-  const fmtK = v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M€' : v >= 1000 ? (v/1000).toFixed(0) + 'K€' : v + '€';
+  const fmtK = v => {
+    if (v === null || v === undefined) return '<span class="text-slate-300 dark:text-slate-600">—</span>';
+    return v >= 1000000 ? (v/1000000).toFixed(1) + 'M€' : v >= 1000 ? (v/1000).toFixed(0) + 'K€' : v + '€';
+  };
 
-  // Table
-  container.innerHTML = `<div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead><tr class="bg-slate-50 dark:bg-background-dark/50">
-          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre</th>
-          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Cargo</th>
-          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Partido</th>
-          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Antes</th>
-          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Después</th>
-          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Variación</th>
-        </tr></thead>
-        <tbody>${patrimonio.map(p => {
-          const col = stats[p.partido]?.color || '#999';
-          const varColor = p.variacion_pct > 50 ? '#ef4444' : p.variacion_pct > 20 ? '#f59e0b' : '#10b981';
-          return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
-            <td class="px-4 py-2.5"><span class="text-sm font-semibold text-slate-800 dark:text-white">${p.nombre}</span></td>
-            <td class="px-4 py-2.5 text-xs text-slate-500">${p.cargo}</td>
-            <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:${col}20;color:${col}">${p.partido}</span></td>
-            <td class="px-4 py-2.5 text-right text-sm text-slate-600 dark:text-slate-400">${fmtK(p.antes.total_estimado)} <span class="text-[10px] text-slate-400">(${p.antes.año})</span></td>
-            <td class="px-4 py-2.5 text-right text-sm font-semibold text-slate-800 dark:text-white">${fmtK(p.despues.total_estimado)} <span class="text-[10px] text-slate-400">(${p.despues.año})</span></td>
-            <td class="px-4 py-2.5 text-right"><span class="text-sm font-bold" style="color:${varColor}">+${p.variacion_pct}%</span></td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table>
+  // Property type icons map
+  const propIcons = {
+    vivienda: { icon: '🏠', label: 'Vivienda' },
+    vivienda_oficial: { icon: '🏛️', label: 'Vivienda oficial' },
+    finca: { icon: '🌾', label: 'Finca' },
+    garaje: { icon: '🅿️', label: 'Garaje' },
+    local: { icon: '🏪', label: 'Local comercial' },
+    almacen: { icon: '🏭', label: 'Almacén/Nave' },
+    terreno: { icon: '📐', label: 'Terreno' },
+    oficina: { icon: '🏢', label: 'Oficina' },
+  };
+
+  const renderPropIcons = (props) => {
+    if (props === null || props === undefined) return '<span class="text-slate-300 dark:text-slate-600 text-[10px]">Sin datos</span>';
+    if (props.length === 0) return '<span class="text-slate-300 dark:text-slate-600 text-[10px]">Ninguna</span>';
+    return props.map(p => {
+      const info = propIcons[p.tipo] || { icon: '🏗️', label: p.tipo };
+      return `<span title="${info.label}: ${(p.descripcion||'').replace(/"/g, '&quot;')}" class="cursor-help text-base inline-block hover:scale-125 transition-transform">${info.icon}</span>`;
+    }).join(' ');
+  };
+
+  const propDiff = (antes, despues) => {
+    if (!antes || !despues) return '';
+    const diff = despues.length - antes.length;
+    if (diff > 0) return `<span class="ml-1.5 text-[10px] font-bold text-red-500" title="${diff} nueva(s)">+${diff}</span>`;
+    if (diff === 0) return `<span class="ml-1.5 text-[10px] text-slate-400">=</span>`;
+    return `<span class="ml-1.5 text-[10px] font-bold text-green-500">${diff}</span>`;
+  };
+
+  // Get unique parties from data
+  const partidos = [...new Set(allPatrimonio.map(p => p.partido))].sort();
+  const conDatos = allPatrimonio.filter(p => p.tiene_datos);
+  const conActividades = allPatrimonio.filter(p => !p.tiene_datos && p.tiene_actividades);
+  const sinDatos = allPatrimonio.filter(p => !p.tiene_datos && !p.tiene_actividades);
+
+  // Sector icon map
+  const sectorIcons = {
+    'Público': '🏛️', 'Privado': '💼', 'Educación': '🎓', 'Jurídico': '⚖️',
+    'Comunicación': '📺', 'Sanidad': '🏥', 'Tercer Sector': '🤝', 'Partido Político': '🏳️',
+    'Agrario': '🌾', 'Cultura/Deporte': '🎭'
+  };
+
+  // State
+  let filtroPartido = '';
+  let filtroBusqueda = '';
+  let filtroDatos = 'todos'; // 'todos', 'con_datos', 'sin_datos'
+  let pagina = 0;
+  const porPagina = 50;
+
+  function getFiltered() {
+    let list = allPatrimonio;
+    if (filtroBusqueda) {
+      const q = filtroBusqueda.toLowerCase();
+      list = list.filter(p => {
+        const act = p.declaracion_actividades || {};
+        return p.nombre.toLowerCase().includes(q)
+          || (p.cargo||'').toLowerCase().includes(q)
+          || (p.circunscripcion||'').toLowerCase().includes(q)
+          || (act.empleadores||[]).some(e => e.toLowerCase().includes(q))
+          || (act.sectores||[]).some(s => s.toLowerCase().includes(q));
+      });
+    }
+    if (filtroPartido) list = list.filter(p => p.partido === filtroPartido);
+    if (filtroDatos === 'con_datos') list = list.filter(p => p.tiene_datos);
+    if (filtroDatos === 'con_actividades') list = list.filter(p => !p.tiene_datos && p.tiene_actividades);
+    if (filtroDatos === 'sin_datos') list = list.filter(p => !p.tiene_datos && !p.tiene_actividades);
+    return list;
+  }
+
+  function renderTable() {
+    const filtered = getFiltered();
+    const totalPages = Math.ceil(filtered.length / porPagina);
+    if (pagina >= totalPages) pagina = Math.max(0, totalPages - 1);
+    const paged = filtered.slice(pagina * porPagina, (pagina + 1) * porPagina);
+
+    const tableEl = document.getElementById('patrimonio-table-body');
+    if (tableEl) tableEl.innerHTML = paged.map(p => renderRow(p)).join('');
+
+    const infoEl = document.getElementById('patrimonio-info');
+    if (infoEl) infoEl.textContent = `Mostrando ${pagina * porPagina + 1}–${Math.min((pagina+1)*porPagina, filtered.length)} de ${filtered.length} diputados`;
+
+    const pagEl = document.getElementById('patrimonio-pagination');
+    if (pagEl) {
+      if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
+      let btns = '';
+      if (pagina > 0) btns += `<button onclick="window._patrimonioPag(${pagina-1})" class="px-2.5 py-1 rounded text-xs bg-slate-100 dark:bg-surface-dark hover:bg-primary/20 text-slate-600 dark:text-slate-300">← Anterior</button>`;
+      // Show page numbers with ellipsis
+      for (let i = 0; i < totalPages; i++) {
+        if (i === 0 || i === totalPages-1 || Math.abs(i - pagina) <= 1) {
+          btns += `<button onclick="window._patrimonioPag(${i})" class="px-2.5 py-1 rounded text-xs ${i === pagina ? 'bg-primary text-white font-bold' : 'bg-slate-100 dark:bg-surface-dark hover:bg-primary/20 text-slate-600 dark:text-slate-300'}">${i+1}</button>`;
+        } else if (i === 1 || i === totalPages-2) {
+          btns += `<span class="text-slate-400 text-xs px-1">…</span>`;
+        }
+      }
+      if (pagina < totalPages - 1) btns += `<button onclick="window._patrimonioPag(${pagina+1})" class="px-2.5 py-1 rounded text-xs bg-slate-100 dark:bg-surface-dark hover:bg-primary/20 text-slate-600 dark:text-slate-300">Siguiente →</button>`;
+      pagEl.innerHTML = btns;
+    }
+    const pagBot = document.getElementById('patrimonio-pagination-bottom');
+    if (pagBot && pagEl) pagBot.innerHTML = pagEl.innerHTML;
+  }
+
+  function renderRow(p) {
+    const col = stats[p.partido]?.color || '#999';
+    const hasDatos = p.tiene_datos;
+    const hasAct = p.tiene_actividades;
+    const isEx = p.ex_diputado;
+
+    // Deputies with activity declarations but no curated patrimonio
+    if (!hasDatos && hasAct) {
+      const act = p.declaracion_actividades || {};
+      const sectores = (act.sectores || []).map(s => `<span title="${s}">${sectorIcons[s] || '📌'}</span>`).join(' ');
+      const empleadores = (act.empleadores || []).slice(0, 3).map(e => `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700/50 text-[10px] text-slate-600 dark:text-slate-300 whitespace-nowrap">${e}</span>`).join(' ');
+      const nAct = act.n_actividades || 0;
+      const nFund = act.n_fundaciones || 0;
+      const nDon = act.n_donaciones || 0;
+      const badges = [
+        nAct > 0 ? `<span class="text-[10px] px-1 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" title="${nAct} actividad(es) declarada(s)">🏢 ${nAct}</span>` : '',
+        nFund > 0 ? `<span class="text-[10px] px-1 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" title="${nFund} fundación/es">🏛️ ${nFund}</span>` : '',
+        nDon > 0 ? `<span class="text-[10px] px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" title="${nDon} donación/es">💰 ${nDon}</span>` : '',
+      ].filter(Boolean).join(' ');
+
+      return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+        <td class="px-3 py-2"><span class="text-sm text-slate-700 dark:text-slate-200">${p.nombre}</span></td>
+        <td class="px-3 py-2 text-xs text-slate-400">${p.cargo}</td>
+        <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:${col}20;color:${col}">${p.partido}</span></td>
+        <td class="px-3 py-2" colspan="2"><div class="flex flex-wrap gap-1 items-center">${sectores ? `<span class="text-base">${sectores}</span>` : ''} ${empleadores}</div></td>
+        <td class="px-3 py-2" colspan="2"><div class="flex flex-wrap gap-1 items-center">${badges}</div></td>
+        <td class="px-3 py-2 text-right"><a href="https://www.congreso.es/web/guest/busqueda-de-diputados" target="_blank" rel="noopener" class="text-[10px] text-primary hover:text-primary/80 underline" title="Ver ficha completa">📋 Ficha</a></td>
+      </tr>`;
+    }
+
+    // Deputies without any data
+    if (!hasDatos) {
+      return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors opacity-50">
+        <td class="px-3 py-2"><span class="text-sm text-slate-500 dark:text-slate-400">${p.nombre}</span></td>
+        <td class="px-3 py-2 text-xs text-slate-400">${p.cargo}</td>
+        <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:${col}20;color:${col}">${p.partido}</span></td>
+        <td class="px-3 py-2 text-center text-[10px] text-slate-300 dark:text-slate-600" colspan="4">
+          <a href="https://www.congreso.es/web/guest/busqueda-de-diputados" target="_blank" rel="noopener" class="hover:text-primary transition-colors">
+            📋 Sin declaración pública disponible — <span class="underline">consultar Congreso</span>
+          </a>
+        </td>
+        <td class="px-3 py-2 text-right text-slate-300 dark:text-slate-600">—</td>
+      </tr>`;
+    }
+
+    const varColor = p.variacion_pct > 50 ? '#ef4444' : p.variacion_pct > 20 ? '#f59e0b' : '#10b981';
+    const exBadge = isEx ? ' <span class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-500 px-1 rounded">EX</span>' : '';
+
+    return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+      <td class="px-3 py-2"><span class="text-sm font-semibold text-slate-800 dark:text-white">${p.nombre}${exBadge}</span></td>
+      <td class="px-3 py-2 text-xs text-slate-500">${p.cargo}</td>
+      <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:${col}20;color:${col}">${p.partido}</span></td>
+      <td class="px-3 py-2 text-right text-sm text-slate-600 dark:text-slate-400">${fmtK(p.antes?.total_estimado)} <span class="text-[10px] text-slate-400">(${p.antes?.año||'?'})</span></td>
+      <td class="px-3 py-2 text-center"><span class="inline-flex items-center gap-0.5 flex-wrap justify-center">${renderPropIcons(p.propiedades_antes)}<span class="ml-1 text-[10px] font-semibold text-slate-500">${(p.propiedades_antes||[]).length}</span></span></td>
+      <td class="px-3 py-2 text-right text-sm font-semibold text-slate-800 dark:text-white">${fmtK(p.despues?.total_estimado)} <span class="text-[10px] text-slate-400">(${p.despues?.año||'?'})</span></td>
+      <td class="px-3 py-2 text-center"><span class="inline-flex items-center gap-0.5 flex-wrap justify-center">${renderPropIcons(p.propiedades_despues)}<span class="ml-1 text-[10px] font-semibold text-slate-500">${(p.propiedades_despues||[]).length}</span>${propDiff(p.propiedades_antes, p.propiedades_despues)}</span></td>
+      <td class="px-3 py-2 text-right"><span class="text-sm font-bold" style="color:${varColor}">+${p.variacion_pct}%</span></td>
+    </tr>`;
+  }
+
+  // Global handler for pagination
+  window._patrimonioPag = (pg) => { pagina = pg; renderTable(); };
+
+  // Main render
+  container.innerHTML = `
+    <!-- Stats summary -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center">
+        <div class="text-2xl font-black text-slate-800 dark:text-white">${allPatrimonio.length}</div>
+        <div class="text-[10px] uppercase tracking-widest text-slate-400">Diputados totales</div>
+      </div>
+      <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center">
+        <div class="text-2xl font-black text-emerald-500">${conDatos.length}</div>
+        <div class="text-[10px] uppercase tracking-widest text-slate-400">Con datos patrimoniales</div>
+      </div>
+      <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center">
+        <div class="text-2xl font-black text-blue-500">${conActividades.length}</div>
+        <div class="text-[10px] uppercase tracking-widest text-slate-400">Con declaración actividades</div>
+      </div>
+      <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center">
+        <div class="text-2xl font-black text-red-500">${conDatos.length > 0 ? (conDatos.reduce((s,p) => s + (p.variacion_pct||0), 0) / conDatos.length).toFixed(1) : 0}%</div>
+        <div class="text-[10px] uppercase tracking-widest text-slate-400">Variación media patrimonio</div>
+      </div>
     </div>
-  </div>`;
 
-  // Chart
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-2 mb-3">
+      <input type="text" id="patrimonio-search" placeholder="🔍 Buscar diputado, circunscripción, empleador, sector..." class="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary/30 outline-none">
+      <select id="patrimonio-partido-filter" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark text-sm text-slate-700 dark:text-slate-200">
+        <option value="">Todos los partidos</option>
+        ${partidos.map(p => `<option value="${p}">${p}</option>`).join('')}
+      </select>
+      <select id="patrimonio-datos-filter" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark text-sm text-slate-700 dark:text-slate-200">
+        <option value="todos">Todos (${allPatrimonio.length})</option>
+        <option value="con_datos">Con patrimonio detallado (${conDatos.length})</option>
+        <option value="con_actividades">Con declaración actividades (${conActividades.length})</option>
+        <option value="sin_datos">Sin datos públicos (${sinDatos.length})</option>
+      </select>
+    </div>
+
+    <!-- Info + Table -->
+    <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+      <div class="px-4 py-2 bg-slate-50 dark:bg-background-dark/50 flex items-center justify-between">
+        <span id="patrimonio-info" class="text-[11px] text-slate-400"></span>
+        <div id="patrimonio-pagination" class="flex items-center gap-1"></div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="bg-slate-50 dark:bg-background-dark/50">
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Cargo</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Partido</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Patrimonio / Sector</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Propiedades / Actividades</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Actual / Declaraciones</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Detalles</th>
+            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Var. / Info</th>
+          </tr></thead>
+          <tbody id="patrimonio-table-body"></tbody>
+        </table>
+      </div>
+      <div class="px-4 py-2 bg-slate-50 dark:bg-background-dark/50 flex items-center justify-between">
+        <span class="text-[11px] text-slate-400"></span>
+        <div id="patrimonio-pagination-bottom" class="flex items-center gap-1"></div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+      <span>Propiedades:</span>
+      ${Object.values(propIcons).map(p => `<span>${p.icon} ${p.label}</span>`).join('')}
+      <span class="ml-2 text-red-400">+N = nuevas</span>
+    </div>
+    <div class="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+      <span>Actividades:</span>
+      <span>🏢 Empleadores</span> <span>🏛️ Fundaciones</span> <span>💰 Donaciones</span>
+      <span class="ml-1">Sectores: ${Object.entries(sectorIcons).map(([k,v])=>`${v} ${k}`).join(' · ')}</span>
+    </div>
+    <div class="mt-1 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[11px] text-blue-600 dark:text-blue-400">
+      📊 Fuente: <strong>Declaración de Actividades, Bienes y Rentas</strong> — Congreso de los Diputados, Registro de Intereses (Open Data).
+      Los datos patrimoniales detallados (propiedades, valoraciones) proceden de las declaraciones de bienes publicadas en el Registro de Intereses.
+    </div>`;
+
+  // Attach filter/search events
+  document.getElementById('patrimonio-search').addEventListener('input', e => {
+    filtroBusqueda = e.target.value; pagina = 0; renderTable();
+  });
+  document.getElementById('patrimonio-partido-filter').addEventListener('change', e => {
+    filtroPartido = e.target.value; pagina = 0; renderTable();
+  });
+  document.getElementById('patrimonio-datos-filter').addEventListener('change', e => {
+    filtroDatos = e.target.value; pagina = 0; renderTable();
+  });
+
+  // Initial render
+  renderTable();
+
+  // Chart — only show deputies with curated data
   const canvas = document.getElementById('chart-patrimonio');
   if (!canvas) return;
-  const sorted = [...patrimonio].sort((a, b) => b.variacion_pct - a.variacion_pct);
+  const sorted = conDatos.sort((a, b) => b.variacion_pct - a.variacion_pct);
+  if (sorted.length === 0) return;
   if (chartInstances.patrimonio) chartInstances.patrimonio.destroy();
   chartInstances.patrimonio = new Chart(canvas, {
     type: 'bar',
@@ -4146,9 +4408,10 @@ function renderAtribucion(container) {
       <div class="prose dark:prose-invert prose-slate max-w-none space-y-6 text-sm text-slate-600 dark:text-slate-400">
         <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
           <h3 class="text-lg font-bold dark:text-white mb-3">Fuentes de datos oficiales</h3>
-          <p>BOE Explorer obtiene toda su información de fuentes gubernamentales abiertas. A continuación se detallan las fuentes y sus condiciones de uso:</p>
+          <p>BOE Explorer obtiene toda su información exclusivamente de fuentes gubernamentales y públicas abiertas. Todos los datos son verificables en los portales oficiales enlazados. A continuación se detallan las fuentes y sus condiciones de uso:</p>
         </div>
 
+        <!-- BOE -->
         <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
           <div class="flex items-center gap-3 mb-4">
             <div class="p-2 rounded-lg bg-primary/10"><span class="material-symbols-outlined text-primary">article</span></div>
@@ -4158,39 +4421,176 @@ function renderAtribucion(container) {
             </div>
           </div>
           <ul class="list-disc pl-5 space-y-2">
-            <li><strong>API utilizada:</strong> <a href="https://www.boe.es/datosabiertos/" target="_blank" class="text-primary hover:underline">BOE Datos Abiertos</a></li>
-            <li><strong>Datos obtenidos:</strong> Sumarios diarios del BOE (todas las secciones), documentos individuales con metadatos (importes, adjudicatarios, NIFs, CPVs, procedimientos).</li>
-            <li><strong>Licencia:</strong> Los datos del BOE son de dominio público y se ofrecen bajo condiciones de reutilización de la información del sector público conforme a la Ley 37/2007.</li>
-            <li><strong>Frecuencia de actualización:</strong> Diaria a las 20:00 CET.</li>
+            <li><strong>API utilizada:</strong> <a href="https://www.boe.es/datosabiertos/" target="_blank" rel="noopener" class="text-primary hover:underline">BOE Datos Abiertos</a></li>
+            <li><strong>Datos obtenidos:</strong> Sumarios diarios del BOE (todas las secciones), documentos individuales con metadatos (importes, adjudicatarios, NIFs, CPVs, procedimientos de licitación).</li>
+            <li><strong>Licencia:</strong> Datos de dominio público bajo condiciones de reutilización conforme a la Ley 37/2007.</li>
+            <li><strong>Frecuencia de actualización:</strong> Diaria (17:00 CET).</li>
+            <li><strong>Verificación:</strong> <a href="https://www.boe.es" target="_blank" rel="noopener" class="text-primary hover:underline">www.boe.es</a></li>
           </ul>
         </div>
 
+        <!-- BDNS -->
         <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
           <div class="flex items-center gap-3 mb-4">
             <div class="p-2 rounded-lg bg-emerald-500/10"><span class="material-symbols-outlined text-emerald-500">payments</span></div>
             <div>
-              <h3 class="text-lg font-bold dark:text-white">Sistema Nacional de Publicidad de Subvenciones (BDNS)</h3>
-              <p class="text-xs text-slate-500">Ministerio de Hacienda — Intervención General de la Administración del Estado</p>
+              <h3 class="text-lg font-bold dark:text-white">Base de Datos Nacional de Subvenciones (BDNS)</h3>
+              <p class="text-xs text-slate-500">Ministerio de Hacienda — Intervención General de la Administración del Estado (IGAE)</p>
             </div>
           </div>
           <ul class="list-disc pl-5 space-y-2">
-            <li><strong>API utilizada:</strong> <a href="https://www.pap.hacienda.gob.es/bdnstrans/" target="_blank" class="text-primary hover:underline">BDNS Transparencia</a></li>
-            <li><strong>Datos obtenidos:</strong> Convocatorias de subvenciones, concesiones, importes y beneficiarios.</li>
-            <li><strong>Licencia:</strong> Datos públicos conforme a la Ley 38/2003 General de Subvenciones y la Base de Datos Nacional de Subvenciones (BDNS).</li>
+            <li><strong>API utilizada:</strong> <a href="https://www.pap.hacienda.gob.es/bdnstrans/" target="_blank" rel="noopener" class="text-primary hover:underline">BDNS Transparencia</a> + API v2.1 pública de detalle de convocatorias.</li>
+            <li><strong>Datos obtenidos:</strong> Convocatorias de subvenciones y ayudas públicas, presupuestos por convocatoria, financiación, clasificación por nivel administrativo (estatal, autonómico, local), destino geográfico y sector.</li>
+            <li><strong>Licencia:</strong> Datos públicos conforme a la Ley 38/2003, de 17 de noviembre, General de Subvenciones, y su obligación de publicidad a través de la BDNS.</li>
             <li><strong>Frecuencia de actualización:</strong> Diaria.</li>
+            <li><strong>Verificación:</strong> <a href="https://www.pap.hacienda.gob.es/bdnstrans/GE/es/convocatorias" target="_blank" rel="noopener" class="text-primary hover:underline">Buscador BDNS</a></li>
           </ul>
         </div>
 
+        <!-- BORME -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-amber-500/10"><span class="material-symbols-outlined text-amber-500">business</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Boletín Oficial del Registro Mercantil (BORME)</h3>
+              <p class="text-xs text-slate-500">Agencia Estatal Boletín Oficial del Estado — Registro Mercantil Central</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>API utilizada:</strong> <a href="https://www.boe.es/diario_borme/" target="_blank" rel="noopener" class="text-primary hover:underline">BORME Diario</a> (XML público de sumarios diarios).</li>
+            <li><strong>Datos obtenidos:</strong> Actos mercantiles inscritos (constituciones, nombramientos, ceses, fusiones, ampliaciones de capital, disoluciones), empresas, administradores y socios, provincia de inscripción.</li>
+            <li><strong>Licencia:</strong> Publicación oficial de inscripciones mercantiles de carácter público conforme al Código de Comercio y al Reglamento del Registro Mercantil (RD 1784/1996).</li>
+            <li><strong>Frecuencia de actualización:</strong> Diaria (días hábiles).</li>
+            <li><strong>Verificación:</strong> <a href="https://www.boe.es/borme/" target="_blank" rel="noopener" class="text-primary hover:underline">www.boe.es/borme</a></li>
+          </ul>
+        </div>
+
+        <!-- Congreso -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-violet-500/10"><span class="material-symbols-outlined text-violet-500">how_to_vote</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Congreso de los Diputados — Datos Abiertos</h3>
+              <p class="text-xs text-slate-500">Congreso de los Diputados de España</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Portal utilizado:</strong> <a href="https://www.congreso.es/es/opendata" target="_blank" rel="noopener" class="text-primary hover:underline">Congreso Open Data</a></li>
+            <li><strong>Datos obtenidos:</strong>
+              <ul class="list-disc pl-5 mt-1 space-y-1">
+                <li><strong>Diputados:</strong> Listado de diputados activos de la XV Legislatura, grupo parlamentario, circunscripción (<a href="https://www.congreso.es/es/opendata/diputados" target="_blank" rel="noopener" class="text-primary hover:underline">fuente</a>).</li>
+                <li><strong>Votaciones:</strong> Resultados individuales de cada votación en Pleno, incluyendo el voto de cada diputado (Sí, No, Abstención, No vota) (<a href="https://www.congreso.es/es/opendata/votaciones" target="_blank" rel="noopener" class="text-primary hover:underline">fuente</a>).</li>
+              </ul>
+            </li>
+            <li><strong>Licencia:</strong> Datos abiertos del Congreso de los Diputados, disponibles para reutilización conforme a las condiciones publicadas en su portal de datos abiertos.</li>
+            <li><strong>Frecuencia de actualización:</strong> Diaria (descarga incremental de nuevas sesiones de votación).</li>
+            <li><strong>Verificación:</strong> <a href="https://www.congreso.es/web/guest/busqueda-de-votaciones" target="_blank" rel="noopener" class="text-primary hover:underline">Buscador de votaciones del Congreso</a></li>
+          </ul>
+        </div>
+
+        <!-- Elecciones -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-rose-500/10"><span class="material-symbols-outlined text-rose-500">ballot</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Resultados Electorales</h3>
+              <p class="text-xs text-slate-500">Ministerio del Interior — Elecciones generales de 2019 y 2023</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Fuente:</strong> <a href="https://infoelectoral.interior.gob.es/" target="_blank" rel="noopener" class="text-primary hover:underline">InfoElectoral</a> — Portal de información electoral del Ministerio del Interior.</li>
+            <li><strong>Datos obtenidos:</strong> Resultados oficiales de elecciones generales (votos totales por partido, escaños obtenidos), utilizados para el análisis de transferencias de voto entre 2019 y 2023.</li>
+            <li><strong>Licencia:</strong> Datos de escrutinio electoral son públicos y oficiales conforme a la Ley Orgánica 5/1985 del Régimen Electoral General (LOREG).</li>
+            <li><strong>Verificación:</strong> <a href="https://infoelectoral.interior.gob.es/opencms/es/elecciones-celebradas/area-de-descargas/" target="_blank" rel="noopener" class="text-primary hover:underline">Área de descargas InfoElectoral</a></li>
+          </ul>
+        </div>
+
+        <!-- Declaraciones de bienes -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-cyan-500/10"><span class="material-symbols-outlined text-cyan-500">account_balance</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Declaraciones de Bienes y Actividades de Diputados</h3>
+              <p class="text-xs text-slate-500">Congreso de los Diputados — Registro de Intereses</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Fuente:</strong> <a href="https://www.congreso.es/en/registro-de-intereses" target="_blank" rel="noopener" class="text-primary hover:underline">Registro de Actividades, Bienes y Derechos Patrimoniales</a> del Congreso de los Diputados.</li>
+            <li><strong>Datos obtenidos:</strong> Patrimonio declarado por los diputados al acceder y durante su cargo: bienes inmuebles (viviendas, fincas, garajes, locales, almacenes), patrimonio estimado total, variación patrimonial.</li>
+            <li><strong>Base legal:</strong> Artículo 160.2 del Reglamento del Congreso y la Ley Orgánica 5/2006, de 10 de abril, de regulación de los conflictos de intereses de los miembros del Gobierno y de los Altos Cargos.</li>
+            <li><strong>Nota:</strong> Las estimaciones patrimoniales se basan en las declaraciones públicas oficiales. Las cifras exactas pueden variar según el momento de la declaración y los criterios de valoración aplicados.</li>
+            <li><strong>Verificación:</strong> <a href="https://www.congreso.es/en/registro-de-intereses?p_auth=AAAA&p_p_id=702" target="_blank" rel="noopener" class="text-primary hover:underline">Consulta del Registro de Intereses</a></li>
+          </ul>
+        </div>
+
+        <!-- Programas electorales -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-indigo-500/10"><span class="material-symbols-outlined text-indigo-500">description</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Programas Electorales y Promesas</h3>
+              <p class="text-xs text-slate-500">Partidos políticos — Documentos públicos de campaña</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Fuentes:</strong>
+              <ul class="list-disc pl-5 mt-1 space-y-1">
+                <li><a href="https://www.psoe.es/media-content/2023/07/Programa-Electoral-PSOE-elecciones-generales-23J.pdf" target="_blank" rel="noopener" class="text-primary hover:underline">Programa electoral PSOE 23J (PDF)</a></li>
+                <li><a href="https://www.pp.es/sites/default/files/documentos/programa-electoral-pp-2023.pdf" target="_blank" rel="noopener" class="text-primary hover:underline">Programa electoral PP 23J (PDF)</a></li>
+                <li><a href="https://www.voxespana.es/wp-content/uploads/2023/07/programa-electoral-vox-2023.pdf" target="_blank" rel="noopener" class="text-primary hover:underline">Programa electoral VOX 23J (PDF)</a></li>
+                <li><a href="https://movimientosumar.es/programa/" target="_blank" rel="noopener" class="text-primary hover:underline">Programa electoral Sumar 23J</a></li>
+                <li><a href="https://bildu.eus/programa/" target="_blank" rel="noopener" class="text-primary hover:underline">Programa electoral EH Bildu</a></li>
+                <li><a href="https://www.esquerra.cat/programa" target="_blank" rel="noopener" class="text-primary hover:underline">Programa electoral ERC</a></li>
+              </ul>
+            </li>
+            <li><strong>Datos obtenidos:</strong> Promesas electorales clasificadas por partido, categoría y estado de cumplimiento; análisis de palabras clave de programas; contradicciones detectadas entre promesas y acciones.</li>
+            <li><strong>Nota:</strong> Los programas electorales son documentos públicos difundidos por los propios partidos durante la campaña electoral. El seguimiento de cumplimiento se basa en verificación cruzada con las publicaciones del BOE y actividad parlamentaria.</li>
+          </ul>
+        </div>
+
+        <!-- Contratación del Estado -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-orange-500/10"><span class="material-symbols-outlined text-orange-500">gavel</span></div>
+            <div>
+              <h3 class="text-lg font-bold dark:text-white">Plataforma de Contratación del Sector Público</h3>
+              <p class="text-xs text-slate-500">Ministerio de Hacienda — Dirección General de Racionalización y Centralización de la Contratación</p>
+            </div>
+          </div>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Portal:</strong> <a href="https://contrataciondelestado.es" target="_blank" rel="noopener" class="text-primary hover:underline">contrataciondelestado.es</a></li>
+            <li><strong>Datos obtenidos:</strong> Información complementaria de licitaciones públicas referenciadas en el BOE (Sección V-A), importes de adjudicación, empresas adjudicatarias.</li>
+            <li><strong>Licencia:</strong> Datos públicos conforme a la Ley 9/2017, de 8 de noviembre, de Contratos del Sector Público.</li>
+            <li><strong>Verificación:</strong> <a href="https://contrataciondelestado.es/wps/portal/plataforma" target="_blank" rel="noopener" class="text-primary hover:underline">Buscador de licitaciones</a></li>
+          </ul>
+        </div>
+
+        <!-- Marco legal -->
         <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
           <h3 class="text-lg font-bold dark:text-white mb-3">Marco legal de reutilización</h3>
+          <p class="mb-3">La reutilización de los datos presentados en esta plataforma se ampara en la siguiente normativa:</p>
           <ul class="list-disc pl-5 space-y-2">
-            <li><strong>Ley 37/2007</strong>, de 16 de noviembre, sobre reutilización de la información del sector público.</li>
+            <li><strong>Ley 37/2007</strong>, de 16 de noviembre, sobre reutilización de la información del sector público (transpone la Directiva 2003/98/CE).</li>
             <li><strong>Real Decreto 1495/2011</strong>, de 24 de octubre, por el que se desarrolla la Ley 37/2007.</li>
             <li><strong>Ley 19/2013</strong>, de 9 de diciembre, de transparencia, acceso a la información pública y buen gobierno.</li>
+            <li><strong>Ley 38/2003</strong>, de 17 de noviembre, General de Subvenciones (publicidad a través de la BDNS).</li>
+            <li><strong>Ley 9/2017</strong>, de 8 de noviembre, de Contratos del Sector Público (transparencia en la contratación).</li>
+            <li><strong>Ley Orgánica 5/1985</strong>, de 19 de junio, del Régimen Electoral General (publicidad de resultados electorales).</li>
             <li><strong>Directiva (UE) 2019/1024</strong> relativa a los datos abiertos y la reutilización de la información del sector público.</li>
+            <li><strong>Reglamento del Congreso de los Diputados</strong>, art. 160.2 (publicidad de las declaraciones de bienes).</li>
           </ul>
         </div>
 
+        <!-- Disclaimer -->
+        <div class="p-6 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-500 mt-0.5">info</span>
+            <div>
+              <h3 class="text-sm font-bold text-amber-800 dark:text-amber-300 mb-2">Aviso importante</h3>
+              <p class="text-xs text-amber-700 dark:text-amber-400">BOE Explorer es una herramienta de análisis y visualización independiente. No está afiliada ni respaldada por ningún organismo gubernamental. Todos los datos provienen de fuentes públicas oficiales verificables en los enlaces proporcionados. Las clasificaciones por sector, destino geográfico y el seguimiento de promesas electorales son análisis propios basados en los datos públicos disponibles. Se recomienda siempre consultar las fuentes originales para datos oficiales.</p>
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>

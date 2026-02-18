@@ -184,4 +184,24 @@ echo "\n[" . date('Y-m-d H:i:s') . "] BORME Actos Mercantiles Update\n";
 $bormeCount = borme_daily_update(true);
 echo "  [BORME] $bormeCount new entries processed\n";
 
+// === Congreso Update ===
+require_once __DIR__ . '/api/congreso_parser.php';
+echo "\n[" . date('Y-m-d H:i:s') . "] Congreso de los Diputados Update\n";
+$congresoOk = congreso_daily_update(true);
+if (!$congresoOk) {
+    echo "  [Congreso] WARNING: Update failed, will retry next run\n";
+}
+
+// === Clear API caches (force fresh data for all endpoints) ===
+$cacheDir = __DIR__ . '/api/cache';
+if (is_dir($cacheDir)) {
+    $cacheFiles = glob("$cacheDir/*.json");
+    $cleared = 0;
+    foreach ($cacheFiles as $cf) {
+        @unlink($cf);
+        $cleared++;
+    }
+    echo "\n[" . date('Y-m-d H:i:s') . "] Cleared $cleared API cache files\n";
+}
+
 echo str_repeat('=', 60) . "\n";

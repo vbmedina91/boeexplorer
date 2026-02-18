@@ -242,6 +242,242 @@ function promesas_buscar_en_boe($keyword) {
     return array_slice($results, 0, 10);
 }
 
+// ─── PATRIMONIO COMPLETO ────────────────────────────────────
+
+/**
+ * Build full patrimonio list merging curated data with all Congress deputies.
+ * Deputies with curated data get full detail; others get basic info from Congress.
+ */
+function promesas_build_patrimonio_completo($curated) {
+    // Load all deputies from Congress data
+    $dipFile = __DIR__ . '/data/congreso/diputados.json';
+    if (!file_exists($dipFile)) return $curated; // fallback
+
+    $diputados = json_decode(file_get_contents($dipFile), true);
+    if (!is_array($diputados)) return $curated;
+
+    // Load docacteco (economic activities declarations) for enrichment
+    require_once __DIR__ . '/congreso_parser.php';
+    $docacteco = congreso_load_docacteco_resumen();
+
+    // Map formacion electoral to canonical partido name
+    $partyMap = [
+        'PP' => 'PP', 'PSOE' => 'PSOE', 'PSC-PSOE' => 'PSOE', 'PsdeG-PSOE' => 'PSOE',
+        'PSE-EE (PSOE)' => 'PSOE', 'PSIB-PSOE' => 'PSOE', 'PSN-PSOE' => 'PSOE',
+        'VOX' => 'VOX', 'SUMAR' => 'Sumar', 'ERC' => 'ERC', 'JxCAT-JUNTS' => 'JxCat',
+        'EH Bildu' => 'Bildu', 'EAJ-PNV' => 'PNV', 'BNG' => 'BNG', 'CCa' => 'CCa',
+        'UPN' => 'UPN',
+    ];
+
+    // Map grupo parlamentario to short code
+    $grupoMap = [
+        'Grupo Parlamentario Popular en el Congreso' => 'GP',
+        'Grupo Parlamentario Socialista' => 'GS',
+        'Grupo Parlamentario VOX' => 'GVOX',
+        'Grupo Parlamentario Plurinacional SUMAR' => 'GSUMAR',
+        'Grupo Parlamentario Republicano' => 'GR',
+        'Grupo Parlamentario Junts per Catalunya' => 'GJxCAT',
+        'Grupo Parlamentario Euskal Herria Bildu' => 'GBildu',
+        'Grupo Parlamentario Vasco (EAJ-PNV)' => 'GPNV',
+        'Grupo Parlamentario Mixto' => 'GMx',
+    ];
+
+    // Normalize sector names to canonical categories
+    $sectorNorm = function($s) {
+        $s = mb_strtolower(trim($s));
+        if ($s === '' || $s === '?') return null;
+        if (str_contains($s, 'público') || str_contains($s, 'publico') || str_contains($s, 'gobierno')
+            || str_contains($s, 'administraci') || str_contains($s, 'adm') || str_contains($s, 'parlamento')
+            || str_contains($s, 'cortes') || str_contains($s, 'institucional') || str_contains($s, 'gubernamental')
+            || str_contains($s, 'diputad') || str_contains($s, 'senador') || str_contains($s, 'concejal')
+            || str_contains($s, 'congreso') || str_contains($s, 'cargo') || str_contains($s, 'legislat')
+            || str_contains($s, 'servicio público') || str_contains($s, 'gobierno vasco')
+            || str_contains($s, 'pblic') || str_contains($s, 'ptblic')) return 'Público';
+        if (str_contains($s, 'privado') || str_contains($s, 'empresa') || str_contains($s, 'retail')
+            || str_contains($s, 'inmobiliari') || str_contains($s, 'banca') || str_contains($s, 'financ')
+            || str_contains($s, 'consultori') || str_contains($s, 'consultoría') || str_contains($s, 'audiovisual')
+            || str_contains($s, 'comerci') || str_contains($s, 'logístic') || str_contains($s, 'construcci')
+            || str_contains($s, 'energi') || str_contains($s, 'ingeniería') || str_contains($s, 'carpet')
+            || str_contains($s, 'sector privado')) return 'Privado';
+        if (str_contains($s, 'educaci') || str_contains($s, 'enseñanza') || str_contains($s, 'universid')
+            || str_contains($s, 'académic') || str_contains($s, 'academia') || str_contains($s, 'docencia')
+            || str_contains($s, 'formati') || str_contains($s, 'educativo') || str_contains($s, 'investigaci')) return 'Educación';
+        if (str_contains($s, 'abogac') || str_contains($s, 'jurídic') || str_contains($s, 'justicia')
+            || str_contains($s, 'profesión liberal') || str_contains($s, 'despacho')) return 'Jurídico';
+        if (str_contains($s, 'medio') || str_contains($s, 'comunicaci') || str_contains($s, 'prensa')
+            || str_contains($s, 'radio') || str_contains($s, 'editorial') || str_contains($s, 'periodi')
+            || str_contains($s, 'publicidad')) return 'Comunicación';
+        if (str_contains($s, 'sanid') || str_contains($s, 'salud') || str_contains($s, 'sanitari')) return 'Sanidad';
+        if (str_contains($s, 'ong') || str_contains($s, 'tercer') || str_contains($s, 'sociedad civil')
+            || str_contains($s, 'fundación') || str_contains($s, 'asociati') || str_contains($s, 'no gubernamental')
+            || str_contains($s, 'think')) return 'Tercer Sector';
+        if (str_contains($s, 'partido') || str_contains($s, 'politic') || str_contains($s, 'política')) return 'Partido Político';
+        if (str_contains($s, 'agrari') || str_contains($s, 'agro') || str_contains($s, 'agrícol')
+            || str_contains($s, 'medio natural')) return 'Agrario';
+        if (str_contains($s, 'cultur') || str_contains($s, 'deport') || str_contains($s, 'museo')
+            || str_contains($s, 'novel')) return 'Cultura/Deporte';
+        return ucfirst($s);
+    };
+
+    // Index curated by normalized name and by compound surname for merging
+    $curatedByName = [];
+    $curatedBySurname = [];
+    foreach ($curated as $p) {
+        $curatedByName[mb_strtolower($p['nombre'])] = $p;
+        $nameParts = explode(' ', $p['nombre'], 2);
+        if (count($nameParts) >= 2) {
+            $curatedBySurname[mb_strtolower($nameParts[1])] = $p;
+        }
+    }
+
+    $result = [];
+    $matchedCurated = [];
+    foreach ($diputados as $dip) {
+        $rawName = $dip['NOMBRE'] ?? '';
+        // Congress format: "Apellido1 Apellido2, Nombre" → "Nombre Apellido1 Apellido2"
+        $parts = explode(',', $rawName, 2);
+        $nombre = trim(($parts[1] ?? '') . ' ' . ($parts[0] ?? ''));
+        $nameLower = mb_strtolower($nombre);
+        $surname = mb_strtolower(trim($parts[0] ?? ''));
+
+        // Congress name key for docacteco: normalize spaces around comma
+        // diputados.json uses "Apellido, Nombre" vs docacteco uses "Apellido,Nombre"
+        $congressKey = preg_replace('/\s*,\s*/', ',', trim($rawName));
+
+        // Check if we have curated data for this deputy
+        $curatedEntry = null;
+        if (isset($curatedByName[$nameLower]) && !isset($matchedCurated[$nameLower])) {
+            $curatedEntry = $curatedByName[$nameLower];
+            $matchedCurated[$nameLower] = true;
+        } elseif (isset($curatedBySurname[$surname]) && !in_array($surname, $matchedCurated, true)) {
+            $curatedEntry = $curatedBySurname[$surname];
+            $matchedCurated[] = $surname;
+        }
+
+        if ($curatedEntry) {
+            $entry = $curatedEntry;
+            $entry['nombre_congreso'] = $nombre;
+            $entry['tiene_datos'] = true;
+            // Also add docacteco data if available
+            if (isset($docacteco[$congressKey])) {
+                $act = $docacteco[$congressKey];
+                $entry['declaracion_actividades'] = promesas_format_actividades($act, $sectorNorm);
+            }
+            $result[] = $entry;
+            continue;
+        }
+
+        $fe = $dip['FORMACIONELECTORAL'] ?? '';
+        $partido = $partyMap[$fe] ?? $fe;
+        $grupo = $grupoMap[$dip['GRUPOPARLAMENTARIO'] ?? ''] ?? 'GMx';
+        $circ = $dip['CIRCUNSCRIPCION'] ?? '';
+        $fechaAlta = $dip['FECHAALTA'] ?? '';
+        $yearAlta = $fechaAlta ? (int)substr($fechaAlta, -4) : 2023;
+
+        $entry = [
+            'nombre' => $nombre,
+            'cargo' => 'Diputado/a por ' . $circ,
+            'partido' => $partido,
+            'grupo' => $grupo,
+            'circunscripcion' => $circ,
+            'fecha_alta' => $fechaAlta,
+            'antes' => [
+                'año' => $yearAlta,
+                'total_estimado' => null,
+                'descripcion' => 'Declaración al acceder al escaño.',
+                'fuente' => 'Registro de Intereses del Congreso',
+            ],
+            'despues' => [
+                'año' => 2024,
+                'total_estimado' => null,
+                'descripcion' => 'Declaración vigente.',
+                'fuente' => 'Registro de Intereses del Congreso',
+            ],
+            'propiedades_antes' => null,
+            'propiedades_despues' => null,
+            'variacion_pct' => null,
+            'nota' => null,
+            'tiene_datos' => false,
+        ];
+
+        // Enrich with docacteco data
+        if (isset($docacteco[$congressKey])) {
+            $act = $docacteco[$congressKey];
+            $entry['declaracion_actividades'] = promesas_format_actividades($act, $sectorNorm);
+            $entry['tiene_actividades'] = true;
+        }
+
+        $result[] = $entry;
+    }
+
+    // Add curated entries that didn't match any active deputy (e.g., former deputies)
+    foreach ($curated as $p) {
+        $nameLower = mb_strtolower($p['nombre']);
+        $nameParts = explode(' ', $p['nombre'], 2);
+        $surname = mb_strtolower($nameParts[1] ?? '');
+        if (!isset($matchedCurated[$nameLower]) && !in_array($surname, $matchedCurated, true)) {
+            $entry = $p;
+            $entry['tiene_datos'] = true;
+            $entry['ex_diputado'] = true;
+            $result[] = $entry;
+        }
+    }
+
+    // Sort: curated first (by variacion_pct desc), then with activities, then rest alphabetically
+    usort($result, function($a, $b) {
+        $aHas = !empty($a['tiene_datos']);
+        $bHas = !empty($b['tiene_datos']);
+        if ($aHas && !$bHas) return -1;
+        if (!$aHas && $bHas) return 1;
+        if ($aHas && $bHas) return ($b['variacion_pct'] ?? 0) <=> ($a['variacion_pct'] ?? 0);
+        return strcasecmp($a['nombre'], $b['nombre']);
+    });
+
+    return $result;
+}
+
+/**
+ * Format docacteco raw data into a compact summary for the frontend.
+ */
+function promesas_format_actividades($act, $sectorNorm) {
+    $sectores = [];
+    $empleadores = [];
+    $nFundaciones = count($act['fundaciones'] ?? []);
+    $nDonaciones = count($act['donaciones'] ?? []);
+    $fechaRegistro = $act['fecha_registro'] ?? '';
+
+    foreach (($act['actividades'] ?? []) as $a) {
+        $sector = $sectorNorm($a['sector'] ?? '');
+        if ($sector) $sectores[$sector] = true;
+        $emp = trim($a['empleador'] ?? '');
+        if ($emp && mb_strlen($emp) > 2) {
+            // Capitalize nicely
+            $emp = mb_convert_case($emp, MB_CASE_TITLE, 'UTF-8');
+            $empleadores[$emp] = $a['sector'] ?? '';
+        }
+    }
+
+    // Build compact description from observaciones
+    $obs = '';
+    foreach (($act['observaciones'] ?? []) as $o) {
+        $desc = trim($o['descripcion'] ?? '');
+        if ($desc && mb_strlen($desc) > 10) {
+            $obs = mb_substr($desc, 0, 200);
+            break;
+        }
+    }
+
+    return [
+        'sectores' => array_keys($sectores),
+        'empleadores' => array_slice(array_keys($empleadores), 0, 5), // top 5
+        'n_actividades' => count($act['actividades'] ?? []),
+        'n_fundaciones' => $nFundaciones,
+        'n_donaciones' => $nDonaciones,
+        'fecha_registro' => $fechaRegistro,
+        'observaciones' => $obs,
+    ];
+}
+
 // ─── RESUMEN / SUMMARY ─────────────────────────────────────
 
 function promesas_resumen() {
@@ -293,6 +529,9 @@ function promesas_resumen() {
         ];
     }
     
+    // Build full patrimonio list: merge curated data with all deputies from Congress
+    $patrimonio_full = promesas_build_patrimonio_completo($data['patrimonio'] ?? []);
+
     return [
         'meta' => $data['meta'] ?? [],
         'gobierno' => $data['gobierno'] ?? [],
@@ -307,7 +546,7 @@ function promesas_resumen() {
         'categorias' => $categorias,
         'keywords' => $keywords,
         'promesas' => $todas,
-        'patrimonio' => $data['patrimonio'] ?? [],
+        'patrimonio' => $patrimonio_full,
         'contradicciones' => $data['contradicciones'] ?? [],
         'fuentes' => $data['fuentes'] ?? [],
     ];

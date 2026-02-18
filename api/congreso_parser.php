@@ -104,6 +104,118 @@ function congreso_fetch_diputados($verbose = false) {
     return false;
 }
 
+// ─── FETCH DECLARACIONES DE ACTIVIDADES ─────────────────────
+
+define('CONGRESO_DOCACTECO_FILE', CONGRESO_DATA_DIR . '/docacteco.json');
+
+/**
+ * Fetch declarations of economic activities/interests (docacteco) from Congress Open Data.
+ * This data includes: ACTIVIDAD, FUNDACIONES, DONACION, OBSERVACIONES per deputy.
+ * Returns number of records saved, or false on failure.
+ */
+function congreso_fetch_docacteco($verbose = false) {
+    // Discover the current filename from the opendata page
+    $ch = curl_init('https://www.congreso.es/es/opendata/diputados');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_USERAGENT => CONGRESO_USER_AGENT,
+        CURLOPT_SSL_VERIFYPEER => false,
+    ]);
+    $html = curl_exec($ch);
+    curl_close($ch);
+
+    if (!$html) {
+        if ($verbose) echo "  [Congreso] ERROR: Could not fetch opendata page for docacteco\n";
+        return false;
+    }
+
+    // docacteco__YYYYMMDDHHMMSS.json
+    if (!preg_match('/docacteco__\d+\.json/', $html, $m)) {
+        if ($verbose) echo "  [Congreso] ERROR: Could not find docacteco JSON URL\n";
+        return false;
+    }
+
+    $jsonUrl = CONGRESO_BASE_URL . '/diputados/' . $m[0];
+    if ($verbose) echo "  [Congreso] Found docacteco URL: $jsonUrl\n";
+
+    $ch = curl_init($jsonUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT => 60,
+        CURLOPT_USERAGENT => CONGRESO_USER_AGENT,
+        CURLOPT_SSL_VERIFYPEER => false,
+    ]);
+    $json = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($code !== 200 || !$json) {
+        if ($verbose) echo "  [Congreso] ERROR: Failed to download docacteco ($code)\n";
+        return false;
+    }
+
+    $records = json_decode($json, true);
+    if (!is_array($records) || empty($records)) {
+        if ($verbose) echo "  [Congreso] ERROR: Invalid docacteco JSON\n";
+        return false;
+    }
+
+    // Save raw data
+    file_put_contents(CONGRESO_DOCACTECO_FILE, json_encode($records, JSON_UNESCAPED_UNICODE));
+    if ($verbose) echo "  [Congreso] Saved " . count($records) . " docacteco records\n";
+
+    // Build per-deputy aggregated summary
+    $byDeputy = [];
+    foreach ($records as $r) {
+        $name = $r['NOMBRE'] ?? '';
+        if (!$name) continue;
+        if (!isset($byDeputy[$name])) {
+            $byDeputy[$name] = [
+                'nombre_congreso' => $name,
+                'fecha_registro' => $r['FECHAREGISTRO'] ?? '',
+                'actividades' => [],
+                'fundaciones' => [],
+                'donaciones' => [],
+                'observaciones' => [],
+            ];
+        }
+        $tipo = $r['TIPO'] ?? '';
+        $entry = [
+            'declaracion' => $r['DECLARACION'] ?? '',
+            'periodo' => $r['PERIODO'] ?? '',
+            'empleador' => $r['EMPLEADOR'] ?? '',
+            'sector' => $r['SECTOR'] ?? '',
+            'descripcion' => $r['DESCRIPCION'] ?? '',
+        ];
+        switch ($tipo) {
+            case 'ACTIVIDAD':    $byDeputy[$name]['actividades'][] = $entry; break;
+            case 'FUNDACIONES':  $byDeputy[$name]['fundaciones'][] = $entry; break;
+            case 'DONACION':     $byDeputy[$name]['donaciones'][] = $entry; break;
+            case 'OBSERVACIONES':$byDeputy[$name]['observaciones'][] = $entry; break;
+        }
+    }
+
+    // Save aggregated summary
+    $summaryFile = CONGRESO_DATA_DIR . '/docacteco_resumen.json';
+    file_put_contents($summaryFile, json_encode($byDeputy, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    if ($verbose) echo "  [Congreso] Built summary for " . count($byDeputy) . " deputies\n";
+
+    return count($records);
+}
+
+/**
+ * Load the aggregated docacteco summary (per deputy).
+ * Returns assoc array keyed by Congress name format "Apellidos,Nombre".
+ */
+function congreso_load_docacteco_resumen() {
+    $file = CONGRESO_DATA_DIR . '/docacteco_resumen.json';
+    if (!file_exists($file)) return [];
+    return json_decode(file_get_contents($file), true) ?: [];
+}
+
 // ─── FETCH VOTACIONES ───────────────────────────────────────
 
 /**
@@ -520,6 +632,59 @@ function congreso_resumen() {
         'correlacion' => $correlacion,
         'meta' => $meta,
     ];
+}
+
+// ─── DAILY UPDATE (called from cron) ────────────────────────
+
+/**
+ * Run daily Congreso data update
+ * - Refresh deputies list
+ * - Download any new voting sessions
+ * - Invalidate attendance cache
+ */
+function congreso_daily_update($verbose = false) {
+    if (!is_dir(CONGRESO_DATA_DIR)) mkdir(CONGRESO_DATA_DIR, 0755, true);
+    if (!is_dir(CONGRESO_VOTACIONES_DIR)) mkdir(CONGRESO_VOTACIONES_DIR, 0755, true);
+
+    // 1. Refresh deputies
+    if ($verbose) echo "  [Congreso] Fetching diputados...\n";
+    $dipCount = congreso_fetch_diputados($verbose);
+    if ($dipCount) {
+        if ($verbose) echo "  [Congreso] Updated $dipCount deputies\n";
+    }
+
+    // 2. Fetch docacteco (economic activities declarations)
+    if ($verbose) echo "  [Congreso] Fetching docacteco...\n";
+    $docactecoCount = congreso_fetch_docacteco($verbose);
+    if ($docactecoCount) {
+        if ($verbose) echo "  [Congreso] Updated $docactecoCount activity records\n";
+    }
+
+    // 3. Discover and download new voting sessions
+    if ($verbose) echo "  [Congreso] Checking for new voting sessions...\n";
+    $urls = congreso_discover_votaciones_urls($verbose);
+    $newSessions = 0;
+    foreach ($urls as $url) {
+        $records = congreso_fetch_votacion_zip($url, $verbose);
+        if (!empty($records)) $newSessions++;
+        usleep(300000); // 300ms rate limit
+    }
+    if ($verbose) echo "  [Congreso] $newSessions new sessions downloaded\n";
+
+    // 4. Invalidate attendance cache so next request recalculates
+    if ($newSessions > 0 && file_exists(CONGRESO_ASISTENCIA_CACHE)) {
+        @unlink(CONGRESO_ASISTENCIA_CACHE);
+        if ($verbose) echo "  [Congreso] Attendance cache invalidated\n";
+    }
+
+    // 5. Update meta
+    $meta = congreso_load_meta();
+    $meta['last_update'] = date('Y-m-d H:i:s');
+    $meta['diputados_count'] = $dipCount ?: ($meta['diputados_count'] ?? 0);
+    congreso_save_meta($meta);
+
+    if ($verbose) echo "  [Congreso] Update complete\n";
+    return true;
 }
 
 // ─── CLI ────────────────────────────────────────────────────

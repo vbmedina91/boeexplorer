@@ -236,13 +236,28 @@ function bdns_store_convocatorias($convocatorias) {
         if (isset($c['id'])) $byId[$c['id']] = $c;
     }
     
-    // Add/update with new data
+    // Enrichment fields that must be preserved when merging new (bare) API data
+    $enrichFields = ['presupuesto', 'importeTotal', 'sector', 'destino_detectado', 'oferta_url', 'enriched_at'];
+
+    // Add/update with new data — preserve enrichment from existing records
     $newCount = 0;
     foreach ($convocatorias as $c) {
-        if (isset($c['id']) && !isset($byId[$c['id']])) {
+        if (!isset($c['id'])) continue;
+        if (!isset($byId[$c['id']])) {
             $newCount++;
+            $byId[$c['id']] = $c;
+        } else {
+            // Merge: update basic fields from API but keep enrichment data
+            $old = $byId[$c['id']];
+            $merged = array_merge($old, $c); // new API data overwrites basic fields
+            // Restore enrichment fields from old record if new record doesn't have them
+            foreach ($enrichFields as $field) {
+                if (isset($old[$field]) && !isset($c[$field])) {
+                    $merged[$field] = $old[$field];
+                }
+            }
+            $byId[$c['id']] = $merged;
         }
-        if (isset($c['id'])) $byId[$c['id']] = $c;
     }
     
     // Sort by fecha desc
@@ -839,5 +854,11 @@ function bdns_daily_update($verbose = false) {
     }
     
     if ($verbose) echo "  [BDNS] Update complete\n";
+
+    // Enrich new records with presupuesto data (budget amounts)
+    if ($verbose) echo "  [BDNS] Enriching presupuestos for new records...\n";
+    $enrichStats = bdns_enrich_presupuestos($verbose, 500); // Limit per run to avoid timeouts
+    if ($verbose) echo "  [BDNS] Enrichment: {$enrichStats['enriched']} new, {$enrichStats['skipped']} already done, {$enrichStats['failed']} failed\n";
+
     return true;
 }

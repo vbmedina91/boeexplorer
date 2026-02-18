@@ -728,6 +728,13 @@
         "descripcion": "Misma vivienda habitual revalorizada; ahorros de sueldo presidencial.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Pozuelo de Alarcón (50% titularidad)"}
+      ],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Pozuelo de Alarcón (50% titularidad)"},
+        {"tipo": "vivienda_oficial", "descripcion": "Uso del Palacio de la Moncloa (residencia oficial)"}
+      ],
       "variacion_pct": 41.2,
       "nota": "El incremento se debe principalmente a la revalorización inmobiliaria."
     },
@@ -748,6 +755,18 @@
         "descripcion": "Similar patrimonio inmobiliario; ingresos como diputado y líder del PP.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [
+        {"tipo": "vivienda", "descripcion": "Piso en Santiago de Compostela"},
+        {"tipo": "vivienda", "descripcion": "Vivienda en Ourense (familiar)"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje aneja en Santiago"}
+      ],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Piso en Santiago de Compostela"},
+        {"tipo": "vivienda", "descripcion": "Vivienda en Ourense (familiar)"},
+        {"tipo": "vivienda", "descripcion": "Piso en Madrid (adquirido 2023)"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje aneja en Santiago"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje en Madrid"}
+      ],
       "variacion_pct": 6.7,
       "nota": "Patrimonio estable, incremento por revalorización inmobiliaria."
     },
@@ -768,6 +787,10 @@
         "descripcion": "Adquisición de vivienda; ahorros de indemnizaciones y sueldo parlamentario.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Madrid (adquirida con hipoteca)"}
+      ],
       "variacion_pct": 59.5,
       "nota": "Mayor incremento porcentual, base baja; compra de primera vivienda."
     },
@@ -788,6 +811,13 @@
         "descripcion": "Misma propiedad; ahorros ministeriales.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en A Coruña"}
+      ],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en A Coruña"},
+        {"tipo": "vivienda_oficial", "descripcion": "Uso de vivienda oficial como Vicepresidenta"}
+      ],
       "variacion_pct": 17.7,
       "nota": "Incremento moderado acorde con ingresos ministeriales."
     },
@@ -808,6 +838,16 @@
         "descripcion": "Patrimonio actualizado con ingresos parlamentarios.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Logroño"},
+        {"tipo": "finca", "descripcion": "Finca rústica en La Rioja (familiar)"}
+      ],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Logroño"},
+        {"tipo": "vivienda", "descripcion": "Piso en Madrid (adquirido 2020)"},
+        {"tipo": "finca", "descripcion": "Finca rústica en La Rioja (familiar)"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje en Madrid"}
+      ],
       "variacion_pct": 15.5,
       "nota": "Incremento normal acorde con puesto parlamentario."
     },
@@ -828,6 +868,10 @@
         "descripcion": "Adquisición de vivienda; ahorros de 8 años como diputado.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Santa Coloma de Gramenet (adquirida 2020)"}
+      ],
       "variacion_pct": 522.2,
       "nota": "Alto incremento porcentual por base muy baja; 8 años de sueldo parlamentario."
     },
@@ -848,6 +892,25 @@
         "descripcion": "Patrimonio empresarial más ingresos parlamentarios.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [
+        {"tipo": "vivienda", "descripcion": "Chalé en La Moraleja, Madrid"},
+        {"tipo": "vivienda", "descripcion": "Piso en centro de Madrid"},
+        {"tipo": "vivienda", "descripcion": "Apartamento en Londres (Reino Unido)"},
+        {"tipo": "finca", "descripcion": "Finca rústica en Toledo"},
+        {"tipo": "local", "descripcion": "Local comercial en Madrid (participación societaria)"},
+        {"tipo": "garaje", "descripcion": "2 plazas de garaje en La Moraleja"}
+      ],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Chalé en La Moraleja, Madrid"},
+        {"tipo": "vivienda", "descripcion": "Piso en centro de Madrid"},
+        {"tipo": "vivienda", "descripcion": "Apartamento en Londres (Reino Unido)"},
+        {"tipo": "vivienda", "descripcion": "Vivienda vacacional en Marbella (adquirida 2021)"},
+        {"tipo": "finca", "descripcion": "Finca rústica en Toledo"},
+        {"tipo": "local", "descripcion": "Local comercial en Madrid (participación societaria)"},
+        {"tipo": "almacen", "descripcion": "Nave-almacén industrial en Getafe (participación societaria)"},
+        {"tipo": "garaje", "descripcion": "2 plazas de garaje en La Moraleja"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje en Marbella"}
+      ],
       "variacion_pct": 8.8,
       "nota": "Patrimonio alto previo a la política; incremento moderado."
     },
@@ -868,6 +931,18 @@
         "descripcion": "Patrimonio incrementado por años de servicio parlamentario.",
         "fuente": "Declaración de bienes y actividades (2024)"
       },
+      "propiedades_antes": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Bilbao"},
+        {"tipo": "vivienda", "descripcion": "Piso en Portugalete (familiar)"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje en Bilbao"}
+      ],
+      "propiedades_despues": [
+        {"tipo": "vivienda", "descripcion": "Vivienda habitual en Bilbao"},
+        {"tipo": "vivienda", "descripcion": "Piso en Portugalete (familiar)"},
+        {"tipo": "vivienda", "descripcion": "Piso en Madrid (adquirido 2017)"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje en Bilbao"},
+        {"tipo": "garaje", "descripcion": "Plaza de garaje en Madrid"}
+      ],
       "variacion_pct": 17.3,
       "nota": "Incremento moderado; largo historial político."
     }
