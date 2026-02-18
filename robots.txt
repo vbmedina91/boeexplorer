@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/data/
+Disallow: /api/cache/
+Disallow: /backend/
+Disallow: /code.html
+
+Sitemap: https://test.pro-eurtec.com/sitemap.xml
