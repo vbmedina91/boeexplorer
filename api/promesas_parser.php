@@ -363,6 +363,11 @@ function promesas_build_patrimonio_completo($curated) {
                 $act = $docacteco[$congressKey];
                 $entry['declaracion_actividades'] = promesas_format_actividades($act, $sectorNorm);
             }
+            // Add salary estimate
+            $entry['salario'] = promesas_calcular_salario(
+                $entry['cargo'] ?? 'Diputado/a',
+                $entry['circunscripcion'] ?? $circ
+            );
             $result[] = $entry;
             continue;
         }
@@ -407,6 +412,9 @@ function promesas_build_patrimonio_completo($curated) {
             $entry['tiene_actividades'] = true;
         }
 
+        // Add salary estimate
+        $entry['salario'] = promesas_calcular_salario($entry['cargo'], $circ);
+
         $result[] = $entry;
     }
 
@@ -419,6 +427,10 @@ function promesas_build_patrimonio_completo($curated) {
             $entry = $p;
             $entry['tiene_datos'] = true;
             $entry['ex_diputado'] = true;
+            $entry['salario'] = promesas_calcular_salario(
+                $entry['cargo'] ?? 'Diputado/a',
+                $entry['circunscripcion'] ?? ''
+            );
             $result[] = $entry;
         }
     }
@@ -434,6 +446,76 @@ function promesas_build_patrimonio_completo($curated) {
     });
 
     return $result;
+}
+
+/**
+ * Calculate estimated annual salary for a deputy based on official public data.
+ * Sources: Congreso transparency data, PGE salary updates.
+ *
+ * 2024 base: 3,142.14€/month × 14 pagas = 43,990€/year (Congreso published)
+ * 2025 base: +2% PGE → 3,205€/month × 14 = 44,870€/year
+ * 2026 base: +2% PGE → 3,269€/month × 14 = 45,767€/year
+ *
+ * Location allowance (indemnización por gastos de representación):
+ *   Madrid: ~13,567€/year (2026 est.) / ~13,301€ (2025)
+ *   Non-Madrid: ~28,415€/year (2026 est.) / ~27,858€ (2025)
+ *
+ * Position supplements (complemento de cargo, 2026 est.):
+ *   Presidente Congreso: +137,307€  |  Vicepresidentes: +44,089€
+ *   Secretarios Mesa: +36,755€  |  Portavoces: +40,154€
+ *   Portavoces adjuntos: +31,424€  |  Presidentes comisión: +21,551€
+ */
+function promesas_calcular_salario($cargo, $circunscripcion) {
+    // Base salary (asignación constitucional) 14 pagas
+    $base2026 = 45767;
+    $base2025 = 44870;
+
+    // Location allowance
+    $esMadrid = (mb_stripos($circunscripcion ?? '', 'Madrid') !== false);
+    $loc2026 = $esMadrid ? 13567 : 28415;
+    $loc2025 = $esMadrid ? 13301 : 27858;
+
+    // Position-based supplement
+    $cargoLower = mb_strtolower($cargo ?? '');
+    $supl2026 = 0;
+    // Government members: primary salary from executive, not Congress
+    if (str_contains($cargoLower, 'ministr') || str_contains($cargoLower, 'presidente del gobierno')) {
+        $supl2026 = 0; // Deputy salary only (they formally retain the seat)
+    } elseif ((str_contains($cargoLower, 'presidente del congreso') || str_contains($cargoLower, 'presidenta del congreso'))
+              && !str_contains($cargoLower, 'anterior')) {
+        $supl2026 = 137307;
+    } elseif (str_contains($cargoLower, 'vicepresident') && !str_contains($cargoLower, 'gobierno')) {
+        $supl2026 = 44089;
+    } elseif (str_contains($cargoLower, 'secretari') && str_contains($cargoLower, 'mesa')) {
+        $supl2026 = 36755;
+    } elseif (str_contains($cargoLower, 'portavoz') && !str_contains($cargoLower, 'adjunt')) {
+        $supl2026 = 40154;
+    } elseif (str_contains($cargoLower, 'portavoz') && str_contains($cargoLower, 'adjunt')) {
+        $supl2026 = 31424;
+    } elseif (str_contains($cargoLower, 'presidente') && str_contains($cargoLower, 'comisión')) {
+        $supl2026 = 21551;
+    } elseif (str_contains($cargoLower, 'secretaria general') || str_contains($cargoLower, 'líder')) {
+        // Party leaders who are also spokespersons
+        $supl2026 = 40154;
+    }
+    $supl2025 = (int)round($supl2026 / 1.02); // derive 2025 from 2026
+
+    $total2026 = $base2026 + $loc2026 + $supl2026;
+    $total2025 = $base2025 + $loc2025 + $supl2025;
+    $variacion = $total2025 > 0 ? round(($total2026 - $total2025) / $total2025 * 100, 1) : 0;
+
+    return [
+        'bruto_anual_2026' => $total2026,
+        'bruto_anual_2025' => $total2025,
+        'variacion_pct' => $variacion,
+        'desglose' => [
+            'base' => $base2026,
+            'localizacion' => $loc2026,
+            'complemento_cargo' => $supl2026,
+        ],
+        'es_madrid' => $esMadrid,
+        'nota' => $supl2026 > 0 ? 'Incluye complemento de cargo' : 'Retribución base + indemnización',
+    ];
 }
 
 /**

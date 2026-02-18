@@ -4002,6 +4002,23 @@ function renderPatrimonio(data, c) {
     return v >= 1000000 ? (v/1000000).toFixed(1) + 'M€' : v >= 1000 ? (v/1000).toFixed(0) + 'K€' : v + '€';
   };
 
+  // Salary formatter
+  const fmtSalario = (sal) => {
+    if (!sal) return '<span class="text-slate-300 dark:text-slate-600">—</span>';
+    const v = sal.bruto_anual_2026;
+    const v0 = sal.bruto_anual_2025;
+    const pct = sal.variacion_pct;
+    const nota = sal.nota || '';
+    const hasSupl = (sal.desglose?.complemento_cargo || 0) > 0;
+    const suplTag = hasSupl ? `<span class="text-[8px] px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400" title="${nota}">+cargo</span>` : '';
+    return `<div class="text-right leading-tight">
+      <span class="text-sm font-semibold text-slate-800 dark:text-white">${(v/1000).toFixed(1)}K€</span>
+      <span class="text-[9px] text-slate-400">/año</span>
+      ${suplTag}
+      <div class="text-[9px] text-emerald-500">+${pct}% <span class="text-slate-400">vs 2025</span></div>
+    </div>`;
+  };
+
   // Property type icons map
   const propIcons = {
     vivienda: { icon: '🏠', label: 'Vivienda' },
@@ -4112,23 +4129,24 @@ function renderPatrimonio(data, c) {
     // Deputies with activity declarations but no curated patrimonio
     if (!hasDatos && hasAct) {
       const act = p.declaracion_actividades || {};
-      const sectores = (act.sectores || []).map(s => `<span title="${s}">${sectorIcons[s] || '📌'}</span>`).join(' ');
+      const sectores = (act.sectores || []).map(s => `<span title="${s}">${sectorIcons[s] || '📌'} <span class="text-[9px] text-slate-500 dark:text-slate-400">${s}</span></span>`).join(' ');
       const empleadores = (act.empleadores || []).slice(0, 3).map(e => `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700/50 text-[10px] text-slate-600 dark:text-slate-300 whitespace-nowrap">${e}</span>`).join(' ');
       const nAct = act.n_actividades || 0;
       const nFund = act.n_fundaciones || 0;
       const nDon = act.n_donaciones || 0;
       const badges = [
-        nAct > 0 ? `<span class="text-[10px] px-1 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" title="${nAct} actividad(es) declarada(s)">🏢 ${nAct}</span>` : '',
-        nFund > 0 ? `<span class="text-[10px] px-1 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" title="${nFund} fundación/es">🏛️ ${nFund}</span>` : '',
-        nDon > 0 ? `<span class="text-[10px] px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" title="${nDon} donación/es">💰 ${nDon}</span>` : '',
+        nAct > 0 ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" title="${nAct} actividad(es) declarada(s)">🏢 ${nAct} actividad${nAct>1?'es':''}</span>` : '',
+        nFund > 0 ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" title="${nFund} fundación/es">🏛️ ${nFund} fundaci${nFund>1?'ones':'ón'}</span>` : '',
+        nDon > 0 ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" title="${nDon} donación/es">💰 ${nDon} donaci${nDon>1?'ones':'ón'}</span>` : '',
       ].filter(Boolean).join(' ');
 
       return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
         <td class="px-3 py-2"><span class="text-sm text-slate-700 dark:text-slate-200">${p.nombre}</span></td>
         <td class="px-3 py-2 text-xs text-slate-400">${p.cargo}</td>
         <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:${col}20;color:${col}">${p.partido}</span></td>
-        <td class="px-3 py-2" colspan="2"><div class="flex flex-wrap gap-1 items-center">${sectores ? `<span class="text-base">${sectores}</span>` : ''} ${empleadores}</div></td>
+        <td class="px-3 py-2" colspan="2"><div class="flex flex-wrap gap-1 items-center">${sectores ? `<span class="text-base leading-relaxed">${sectores}</span>` : ''} ${empleadores}</div></td>
         <td class="px-3 py-2" colspan="2"><div class="flex flex-wrap gap-1 items-center">${badges}</div></td>
+        <td class="px-3 py-2">${fmtSalario(p.salario)}</td>
         <td class="px-3 py-2 text-right"><a href="https://www.congreso.es/web/guest/busqueda-de-diputados" target="_blank" rel="noopener" class="text-[10px] text-primary hover:text-primary/80 underline" title="Ver ficha completa">📋 Ficha</a></td>
       </tr>`;
     }
@@ -4144,6 +4162,7 @@ function renderPatrimonio(data, c) {
             📋 Sin declaración pública disponible — <span class="underline">consultar Congreso</span>
           </a>
         </td>
+        <td class="px-3 py-2">${fmtSalario(p.salario)}</td>
         <td class="px-3 py-2 text-right text-slate-300 dark:text-slate-600">—</td>
       </tr>`;
     }
@@ -4159,6 +4178,7 @@ function renderPatrimonio(data, c) {
       <td class="px-3 py-2 text-center"><span class="inline-flex items-center gap-0.5 flex-wrap justify-center">${renderPropIcons(p.propiedades_antes)}<span class="ml-1 text-[10px] font-semibold text-slate-500">${(p.propiedades_antes||[]).length}</span></span></td>
       <td class="px-3 py-2 text-right text-sm font-semibold text-slate-800 dark:text-white">${fmtK(p.despues?.total_estimado)} <span class="text-[10px] text-slate-400">(${p.despues?.año||'?'})</span></td>
       <td class="px-3 py-2 text-center"><span class="inline-flex items-center gap-0.5 flex-wrap justify-center">${renderPropIcons(p.propiedades_despues)}<span class="ml-1 text-[10px] font-semibold text-slate-500">${(p.propiedades_despues||[]).length}</span>${propDiff(p.propiedades_antes, p.propiedades_despues)}</span></td>
+      <td class="px-3 py-2">${fmtSalario(p.salario)}</td>
       <td class="px-3 py-2 text-right"><span class="text-sm font-bold" style="color:${varColor}">+${p.variacion_pct}%</span></td>
     </tr>`;
   }
@@ -4169,7 +4189,7 @@ function renderPatrimonio(data, c) {
   // Main render
   container.innerHTML = `
     <!-- Stats summary -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
       <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center">
         <div class="text-2xl font-black text-slate-800 dark:text-white">${allPatrimonio.length}</div>
         <div class="text-[10px] uppercase tracking-widest text-slate-400">Diputados totales</div>
@@ -4185,6 +4205,11 @@ function renderPatrimonio(data, c) {
       <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center">
         <div class="text-2xl font-black text-red-500">${conDatos.length > 0 ? (conDatos.reduce((s,p) => s + (p.variacion_pct||0), 0) / conDatos.length).toFixed(1) : 0}%</div>
         <div class="text-[10px] uppercase tracking-widest text-slate-400">Variación media patrimonio</div>
+      </div>
+      <div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-center" style="background:rgba(16,185,129,0.04)">
+        <div class="text-2xl font-black text-emerald-600">${(allPatrimonio.reduce((s,p) => s + (p.salario?.bruto_anual_2026||0), 0) / allPatrimonio.length / 1000).toFixed(1)}K€</div>
+        <div class="text-[10px] uppercase tracking-widest text-slate-400">Salario medio bruto</div>
+        <div class="text-[9px] text-emerald-500 mt-0.5">+~2% vs 2025</div>
       </div>
     </div>
 
@@ -4211,16 +4236,23 @@ function renderPatrimonio(data, c) {
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead><tr class="bg-slate-50 dark:bg-background-dark/50">
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Cargo</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Partido</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Patrimonio / Sector</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Propiedades / Actividades</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Actual / Declaraciones</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Detalles</th>
-            <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Var. / Info</th>
-          </tr></thead>
+          <thead>
+            <tr class="bg-slate-50 dark:bg-background-dark/50">
+              <th rowspan="2" class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-border-dark align-bottom">Nombre</th>
+              <th rowspan="2" class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-border-dark align-bottom">Cargo</th>
+              <th rowspan="2" class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-border-dark align-bottom">Partido</th>
+              <th colspan="2" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-center border-b border-slate-200 dark:border-border-dark" style="color:#3b82f6;background:rgba(59,130,246,0.06)">📉 Antes</th>
+              <th colspan="2" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-center border-b border-slate-200 dark:border-border-dark" style="color:#f59e0b;background:rgba(245,158,11,0.06)">📈 Después</th>
+              <th rowspan="2" class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right border-b border-slate-200 dark:border-border-dark align-bottom" style="color:#10b981;background:rgba(16,185,129,0.06)">💰 Salario<br><span class="text-[8px] font-normal normal-case">bruto anual</span></th>
+              <th rowspan="2" class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right border-b border-slate-200 dark:border-border-dark align-bottom">Var.</th>
+            </tr>
+            <tr class="bg-slate-50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-border-dark">
+              <th class="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Patrimonio <span class="normal-case text-[8px] text-slate-300 dark:text-slate-600">/ Sector</span></th>
+              <th class="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center">Propiedades <span class="normal-case text-[8px] text-slate-300 dark:text-slate-600">/ Empleo</span></th>
+              <th class="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Patrimonio <span class="normal-case text-[8px] text-slate-300 dark:text-slate-600">/ Declar.</span></th>
+              <th class="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center">Propiedades <span class="normal-case text-[8px] text-slate-300 dark:text-slate-600">/ Detalle</span></th>
+            </tr>
+          </thead>
           <tbody id="patrimonio-table-body"></tbody>
         </table>
       </div>
@@ -4244,6 +4276,11 @@ function renderPatrimonio(data, c) {
     <div class="mt-1 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[11px] text-blue-600 dark:text-blue-400">
       📊 Fuente: <strong>Declaración de Actividades, Bienes y Rentas</strong> — Congreso de los Diputados, Registro de Intereses (Open Data).
       Los datos patrimoniales detallados (propiedades, valoraciones) proceden de las declaraciones de bienes publicadas en el Registro de Intereses.
+    </div>
+    <div class="mt-1 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[11px] text-emerald-600 dark:text-emerald-400">
+      💰 <strong>Salarios</strong>: Retribución bruta anual = asignación constitucional (14 pagas) + indemnización por localidad (Madrid/fuera) + complemento de cargo (si aplica).
+      Estimaciones 2026 basadas en PGE (+2% s/ 2025). Fuente: <em>Congreso, BOE, Wikipedia</em>.
+      Los diputados que son también miembros del Gobierno (ministros) perciben su salario del ejecutivo, no del Congreso.
     </div>`;
 
   // Attach filter/search events
