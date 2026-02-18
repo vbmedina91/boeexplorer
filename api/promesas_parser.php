@@ -449,56 +449,84 @@ function promesas_build_patrimonio_completo($curated) {
 }
 
 /**
- * Calculate estimated annual salary for a deputy based on official public data.
- * Sources: Congreso transparency data, PGE salary updates.
+ * Annual salary for a deputy, using OFFICIAL 2026 figures from
+ * congreso.es/cem/regecodip (updated 17-feb-2026).
  *
- * 2024 base: 3,142.14€/month × 14 pagas = 43,990€/year (Congreso published)
- * 2025 base: +2% PGE → 3,205€/month × 14 = 44,870€/year
- * 2026 base: +2% PGE → 3,269€/month × 14 = 45,767€/year
+ * Sección II – Retribuciones (sujetas a IRPF, 14 pagas):
+ *   Asignación constitucional: 3.366,99 €/mes × 14 = 47.138 €/año
  *
- * Location allowance (indemnización por gastos de representación):
- *   Madrid: ~13,567€/year (2026 est.) / ~13,301€ (2025)
- *   Non-Madrid: ~28,415€/year (2026 est.) / ~27,858€ (2025)
+ * Complementos mensuales por razón del cargo (×14):
+ *   Presidente/a: (3.683,74+4.000,26+3.279,85)×14 = 153.494 €
+ *   Vicepresidentes: (1.449,90+1.211,65+847,57)×14 =  49.128 €
+ *   Secretarios Mesa: (1.132,08+981,04+811,91)×14  =  40.950 €
+ *   Portavoces:       (2.087,08+1.110,33)×14       =  44.764 €
+ *   Portavoces adj.:  (1.704,48+792,57)×14         =  34.959 €
+ *   Pres. Comisión:    1.712,50×14                  =  23.975 €
  *
- * Position supplements (complemento de cargo, 2026 est.):
- *   Presidente Congreso: +137,307€  |  Vicepresidentes: +44,089€
- *   Secretarios Mesa: +36,755€  |  Portavoces: +40,154€
- *   Portavoces adjuntos: +31,424€  |  Presidentes comisión: +21,551€
+ * Sección III – Indemnización (exenta IRPF art.17.2.b, 14 pagas):
+ *   Madrid:       1.032,38 €/mes × 14 = 14.453 €/año
+ *   Fuera Madrid: 2.162,85 €/mes × 14 = 30.280 €/año
+ *
+ * 2025 se estima como 2026 / 1,025 (subida media ~2,5 %).
  */
 function promesas_calcular_salario($cargo, $circunscripcion) {
-    // Base salary (asignación constitucional) 14 pagas
-    $base2026 = 45767;
-    $base2025 = 44870;
+    // ── Datos oficiales 2026 (congreso.es/cem/regecodip) ─────────
+    // Asignación constitucional: 3.366,99 €/mes × 14 pagas
+    $base2026 = 47138;
+    $base2025 = (int)round($base2026 / 1.025);
 
-    // Location allowance
+    // Indemnización: 14 pagas (exenta IRPF)
     $esMadrid = (mb_stripos($circunscripcion ?? '', 'Madrid') !== false);
-    $loc2026 = $esMadrid ? 13567 : 28415;
-    $loc2025 = $esMadrid ? 13301 : 27858;
+    $loc2026 = $esMadrid ? 14453 : 30280;   // 1.032,38×14 | 2.162,85×14
+    $loc2025 = (int)round($loc2026 / 1.025);
 
-    // Position-based supplement
+    // Complementos por razón del cargo (×14 pagas, Sección II)
     $cargoLower = mb_strtolower($cargo ?? '');
     $supl2026 = 0;
+    $tipoComplemento = '';
+
     // Government members: primary salary from executive, not Congress
     if (str_contains($cargoLower, 'ministr') || str_contains($cargoLower, 'presidente del gobierno')) {
-        $supl2026 = 0; // Deputy salary only (they formally retain the seat)
-    } elseif ((str_contains($cargoLower, 'presidente del congreso') || str_contains($cargoLower, 'presidenta del congreso'))
-              && !str_contains($cargoLower, 'anterior')) {
-        $supl2026 = 137307;
-    } elseif (str_contains($cargoLower, 'vicepresident') && !str_contains($cargoLower, 'gobierno')) {
-        $supl2026 = 44089;
-    } elseif (str_contains($cargoLower, 'secretari') && str_contains($cargoLower, 'mesa')) {
-        $supl2026 = 36755;
-    } elseif (str_contains($cargoLower, 'portavoz') && !str_contains($cargoLower, 'adjunt')) {
-        $supl2026 = 40154;
-    } elseif (str_contains($cargoLower, 'portavoz') && str_contains($cargoLower, 'adjunt')) {
-        $supl2026 = 31424;
-    } elseif (str_contains($cargoLower, 'presidente') && str_contains($cargoLower, 'comisión')) {
-        $supl2026 = 21551;
-    } elseif (str_contains($cargoLower, 'secretaria general') || str_contains($cargoLower, 'líder')) {
-        // Party leaders who are also spokespersons
-        $supl2026 = 40154;
+        $supl2026 = 0;
     }
-    $supl2025 = (int)round($supl2026 / 1.02); // derive 2025 from 2026
+    // Presidenta/e del Congreso (Mesa+Repr.+Libre disp.)
+    elseif ((str_contains($cargoLower, 'presidente del congreso') || str_contains($cargoLower, 'presidenta del congreso'))
+              && !str_contains($cargoLower, 'anterior')) {
+        $supl2026 = 153494;
+        $tipoComplemento = 'Presidente/a del Congreso';
+    }
+    // Vicepresidentes del Congreso
+    elseif (str_contains($cargoLower, 'vicepresident') && !str_contains($cargoLower, 'gobierno') && !str_contains($cargoLower, 'comisión')) {
+        $supl2026 = 49128;
+        $tipoComplemento = 'Vicepresidente/a';
+    }
+    // Secretarios de la Mesa
+    elseif (str_contains($cargoLower, 'secretari') && str_contains($cargoLower, 'mesa')) {
+        $supl2026 = 40950;
+        $tipoComplemento = 'Secretario/a de la Mesa';
+    }
+    // Portavoces titulares (excl. adjuntos y comisión)
+    elseif (str_contains($cargoLower, 'portavoz') && !str_contains($cargoLower, 'adjunt') && !str_contains($cargoLower, 'comisión')) {
+        $supl2026 = 44764;
+        $tipoComplemento = 'Portavoz';
+    }
+    // Portavoces adjuntos
+    elseif (str_contains($cargoLower, 'portavoz') && str_contains($cargoLower, 'adjunt') && !str_contains($cargoLower, 'comisión')) {
+        $supl2026 = 34959;
+        $tipoComplemento = 'Portavoz adjunto/a';
+    }
+    // Presidentes de Comisión (solo Gastos de representación)
+    elseif (str_contains($cargoLower, 'president') && str_contains($cargoLower, 'comisión')) {
+        $supl2026 = 23975;
+        $tipoComplemento = 'Presidente/a de Comisión';
+    }
+    // Party leaders who are also spokespersons
+    elseif (str_contains($cargoLower, 'secretaria general') || str_contains($cargoLower, 'líder')) {
+        $supl2026 = 44764;
+        $tipoComplemento = 'Portavoz';
+    }
+
+    $supl2025 = (int)round($supl2026 / 1.025);
 
     $total2026 = $base2026 + $loc2026 + $supl2026;
     $total2025 = $base2025 + $loc2025 + $supl2025;
@@ -514,7 +542,10 @@ function promesas_calcular_salario($cargo, $circunscripcion) {
             'complemento_cargo' => $supl2026,
         ],
         'es_madrid' => $esMadrid,
-        'nota' => $supl2026 > 0 ? 'Incluye complemento de cargo' : 'Retribución base + indemnización',
+        'nota' => $tipoComplemento
+            ? "Incluye complemento: {$tipoComplemento}"
+            : 'Asignación constitucional + indemnización',
+        'fuente' => 'congreso.es/cem/regecodip (feb-2026)',
     ];
 }
 

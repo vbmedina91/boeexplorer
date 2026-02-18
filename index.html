@@ -4002,16 +4002,17 @@ function renderPatrimonio(data, c) {
     return v >= 1000000 ? (v/1000000).toFixed(1) + 'M€' : v >= 1000 ? (v/1000).toFixed(0) + 'K€' : v + '€';
   };
 
-  // Salary formatter
+  // Salary formatter — Official data from congreso.es/cem/regecodip (feb-2026)
   const fmtSalario = (sal) => {
     if (!sal) return '<span class="text-slate-300 dark:text-slate-600">—</span>';
     const v = sal.bruto_anual_2026;
-    const v0 = sal.bruto_anual_2025;
     const pct = sal.variacion_pct;
     const nota = sal.nota || '';
+    const fuente = sal.fuente || '';
     const hasSupl = (sal.desglose?.complemento_cargo || 0) > 0;
     const suplTag = hasSupl ? `<span class="text-[8px] px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400" title="${nota}">+cargo</span>` : '';
-    return `<div class="text-right leading-tight">
+    const tooltip = `${nota}${fuente ? ' · Fuente: ' + fuente : ''}`;
+    return `<div class="text-right leading-tight" title="${tooltip}">
       <span class="text-sm font-semibold text-slate-800 dark:text-white">${(v/1000).toFixed(1)}K€</span>
       <span class="text-[9px] text-slate-400">/año</span>
       ${suplTag}
@@ -4278,9 +4279,9 @@ function renderPatrimonio(data, c) {
       Los datos patrimoniales detallados (propiedades, valoraciones) proceden de las declaraciones de bienes publicadas en el Registro de Intereses.
     </div>
     <div class="mt-1 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[11px] text-emerald-600 dark:text-emerald-400">
-      💰 <strong>Salarios</strong>: Retribución bruta anual = asignación constitucional (14 pagas) + indemnización por localidad (Madrid/fuera) + complemento de cargo (si aplica).
-      Estimaciones 2026 basadas en PGE (+2% s/ 2025). Fuente: <em>Congreso, BOE, Wikipedia</em>.
-      Los diputados que son también miembros del Gobierno (ministros) perciben su salario del ejecutivo, no del Congreso.
+      💰 <strong>Salarios</strong>: Percepciones brutas anuales = asignación constitucional (3.366,99 €/mes × 14 pagas) + indemnización por localidad + complemento de cargo (si aplica).
+      <strong>Datos oficiales 2026</strong> del <a href="https://www.congreso.es/cem/regecodip" target="_blank" rel="noopener" class="underline hover:text-emerald-800"><em>Régimen Económico del Congreso</em></a> (actualizado feb-2026).
+      2025 estimado (÷1,025). Miembros del Gobierno perciben solo la asignación base como diputados.
     </div>`;
 
   // Attach filter/search events
@@ -4555,6 +4556,7 @@ function renderAtribucion(container) {
             <li><strong>Fuente:</strong> <a href="https://www.congreso.es/en/registro-de-intereses" target="_blank" rel="noopener" class="text-primary hover:underline">Registro de Actividades, Bienes y Derechos Patrimoniales</a> del Congreso de los Diputados.</li>
             <li><strong>Datos obtenidos:</strong> Patrimonio declarado por los diputados al acceder y durante su cargo: bienes inmuebles (viviendas, fincas, garajes, locales, almacenes), patrimonio estimado total, variación patrimonial.</li>
             <li><strong>Base legal:</strong> Artículo 160.2 del Reglamento del Congreso y la Ley Orgánica 5/2006, de 10 de abril, de regulación de los conflictos de intereses de los miembros del Gobierno y de los Altos Cargos.</li>
+            <li><strong>Salarios:</strong> Datos oficiales 2026 del <a href="https://www.congreso.es/cem/regecodip" target="_blank" rel="noopener" class="text-primary hover:underline">Régimen Económico del Congreso</a> (Sección II Retribuciones + Sección III Indemnización). Asignación constitucional 3.366,99 €/mes × 14 pagas + indemnización por circunscripción (Madrid 1.032,38 €/mes / fuera 2.162,85 €/mes × 14) + complementos por cargo.</li>
             <li><strong>Nota:</strong> Las estimaciones patrimoniales se basan en las declaraciones públicas oficiales. Las cifras exactas pueden variar según el momento de la declaración y los criterios de valoración aplicados.</li>
             <li><strong>Verificación:</strong> <a href="https://www.congreso.es/en/registro-de-intereses?p_auth=AAAA&p_p_id=702" target="_blank" rel="noopener" class="text-primary hover:underline">Consulta del Registro de Intereses</a></li>
           </ul>
