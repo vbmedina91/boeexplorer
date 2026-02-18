@@ -1,0 +1,33 @@
+{
+  "_comentario": "Ejemplo REAL de acta del Registro Mercantil extraída de PDF del BORME (17 febrero 2026)",
+  "_fuente": "https://www.boe.es/datosabiertos/api/borme/sumario/20260217",
+  "_nota": "BOE Explorer descarga el PDF, lo procesa con pdftotext, y extrae empresa, actos y personas con NLP. De un PDF de texto plano a JSON estructurado.",
+
+  "numero": "80734",
+  "empresa": "CAFE CHURRERIA ZONA 7 SOCIEDAD LIMITADA LABORAL",
+  "provincia": "ALBACETE",
+  "actos": [
+    "Nombramientos",
+    "Ceses/Dimisiones",
+    "Disolución",
+    "Extinción"
+  ],
+  "personas": [
+    {
+      "nombre": "Tercero Lopez Juan Carlos",
+      "cargo": "Liquidador",
+      "accion": "Ceses/Dimisiones"
+    },
+    {
+      "nombre": "Tercero Lopez Juan Carlos",
+      "cargo": "Administrador mancomunado",
+      "accion": "Ceses/Dimisiones"
+    },
+    {
+      "nombre": "Diaz Galvez Leonides",
+      "cargo": "Administrador mancomunado",
+      "accion": "Ceses/Dimisiones"
+    }
+  ],
+  "datos_registrales": "S 8 , H AB 20000, I/A 4 (10"
+}

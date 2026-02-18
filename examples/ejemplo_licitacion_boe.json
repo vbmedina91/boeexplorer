@@ -1,0 +1,25 @@
+{
+  "_comentario": "Ejemplo REAL de licitación procesada por BOE Explorer (17 febrero 2026)",
+  "_fuente": "https://www.boe.es/diario_boe/xml.php?id=BOE-B-2026-4725",
+  "_nota": "Comparar con el XML original de ~120 líneas. BOE Explorer extrae y estructura los campos clave automáticamente.",
+
+  "id": "BOE-B-2026-4725",
+  "fecha": "2026-02-17",
+  "titulo": "Anuncio de formalización de contratos de: Jefatura de la Sección Económico Administrativa 23 de la Base Aérea de Albacete. Objeto: Suministro de pienso para la Sección Cinológica de la Base Aérea de Albacete. Expediente: 2025/EA23/00002109E.",
+  "tipo": "Adjudicación",
+  "departamento": "MINISTERIO DE DEFENSA",
+  "seccion": "V-A",
+  "url_pdf": "https://www.boe.es/boe/dias/2026/02/17/pdfs/BOE-B-2026-4725.pdf",
+  "url_html": "https://www.boe.es/diario_boe/txt.php?id=BOE-B-2026-4725",
+  "url_xml": "https://www.boe.es/diario_boe/xml.php?id=BOE-B-2026-4725",
+
+  "importe": 5785.12,
+  "adjudicatario": "KIWOKO PET, S.L.U",
+  "nif_adjudicatario": "B85236461",
+  "tipo_contrato_detalle": "Suministros",
+  "procedimiento": "Restringido",
+  "cpv": "15000000 Alimentos, bebidas, tabaco y productos afines",
+  "ambito_geografico": "Castilla-La Mancha",
+  "es_pyme": true,
+  "modalidad": "Formalización contrato"
+}

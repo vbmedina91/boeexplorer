@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Este es el XML ORIGINAL tal como lo sirve el BOE para el documento BOE-B-2026-4725.
+  Comparar con examples/ejemplo_licitacion_boe.json para ver cómo BOE Explorer
+  lo transforma en un JSON limpio y estructurado.
+
+  Fuente: https://www.boe.es/diario_boe/xml.php?id=BOE-B-2026-4725
+-->
+<documento fecha_actualizacion="20260217071544">
+  <metadatos>
+    <identificador>BOE-B-2026-4725</identificador>
+    <departamento codigo="6110">Ministerio de Defensa</departamento>
+    <titulo>Anuncio de formalización de contratos de: Jefatura de la Sección Económico Administrativa 23 de la Base Aérea de Albacete. Objeto: Suministro de pienso para la Sección Cinológica de la Base Aérea de Albacete. Expediente: 2025/EA23/00002109E.</titulo>
+    <diario codigo="BOE">Boletín Oficial del Estado</diario>
+    <fecha_publicacion>20260217</fecha_publicacion>
+    <diario_numero>42</diario_numero>
+    <seccion>5</seccion>
+    <subseccion>A</subseccion>
+    <numero_anuncio>A260005505</numero_anuncio>
+    <pagina_inicial>7473</pagina_inicial>
+    <pagina_final>7474</pagina_final>
+    <suplemento_pagina_inicial/>
+    <suplemento_pagina_final/>
+    <url_pdf>/boe/dias/2026/02/17/pdfs/BOE-B-2026-4725.pdf</url_pdf>
+    <letra_imagen>B</letra_imagen>
+    <suplemento_letra_imagen/>
+  </metadatos>
+  <analisis>
+    <modalidad codigo="F">Formalización contrato</modalidad>
+    <tipo codigo="1">Suministros</tipo>
+    <procedimiento codigo="2">Restringido</procedimiento>
+    <ambito_geografico>Castilla-La Mancha</ambito_geografico>
+    <materias/>
+    <materias_cpv>15000000 Alimentos, bebidas, tabaco y productos afines</materias_cpv>
+    <observaciones/>
+  </analisis>
+  <texto>
+    <dl>
+      <dt>1. Poder adjudicador: </dt>
+      <dd>
+        <dl>
+          <dt>1.1) Nombre: </dt>
+          <dd>Jefatura de la Sección Económico Administrativa 23 de la Base Aérea de Albacete.</dd>
+          <dt>1.2) Número de identificación fiscal: </dt>
+          <dd>S0222001J.</dd>
+          <dt>1.3) Dirección: </dt>
+          <dd>Base Aérea de Albacete - Carretera de Murcia s/n.</dd>
+          <dt>1.4) Localidad: </dt>
+          <dd>Albacete.</dd>
+          <dt>1.5) Provincia: </dt>
+          <dd>Albacete.</dd>
+          <dt>1.6) Código postal: </dt>
+          <dd>02071.</dd>
+          <dt>1.7) País: </dt>
+          <dd>España.</dd>
+          <dt>1.8) Código NUTS: </dt>
+          <dd>ES421.</dd>
+          <dt>1.9) Teléfono: </dt>
+          <dd>967556657.</dd>
+          <dt>1.10) Fax: </dt>
+          <dd>967556682.</dd>
+          <dt>1.11) Correo electrónico: </dt>
+          <dd>sea23expedientes@mde.es</dd>
+          <dt>1.12) Dirección principal: </dt>
+          <dd>http://www.ejercitodelaire.mde.es/Contratacion</dd>
+          <dt>1.13) Dirección del perfil de comprador: </dt>
+          <dd>https://contrataciondelestado.es/wps/poc?uri=deeplink:perfilContratante&amp;idBp=WQAYKYwRVpA%3D</dd>
+        </dl>
+      </dd>
+      <dt>2. Tipo de poder adjudicador y principal actividad ejercida:</dt>
+      <dd>
+        <dl>
+          <dt>2.1) Tipo: </dt>
+          <dd>Autoridad estatal.</dd>
+          <dt>2.2) Actividad principal ejercida: </dt>
+          <dd>Defensa.</dd>
+        </dl>
+      </dd>
+      <dt>4. Códigos CPV:</dt>
+      <dd>15710000 (Alimentos preparados para animales de granja y otros animales).</dd>
+      <dt>5. Lugar principal de entrega de los suministros:</dt>
+      <dd>ES421.</dd>
+      <dt>6. Descripción de la licitación:</dt>
+      <dd>Suministro de pienso para la Sección Cinológica de la Base Aérea de Albacete.</dd>
+      <dt>7. Tipo de procedimiento de adjudicación: </dt>
+      <dd>Restringido.</dd>
+      <dt>9. Criterios de adjudicación: </dt>
+      <dd>Precio (Ponderación: 100%).</dd>
+      <dt>10. Número de ofertas recibidas: </dt>
+      <dd>1.</dd>
+      <dt>12. Adjudicatarios: </dt>
+      <dd>
+        <dl>
+          <dt>12.1) Nombre: </dt>
+          <dd>KIWOKO PET, S.L.U.</dd>
+          <dt>12.2) NIF: </dt>
+          <dd>B85236461.</dd>
+          <dt>12.4) Nacionalidad: </dt>
+          <dd>España.</dd>
+          <dt>12.6) Es una PYME: </dt>
+          <dd>Sí.</dd>
+        </dl>
+      </dd>
+      <dt>14. Valor de la adjudicación del contrato: </dt>
+      <dd>5.785,12 euros.</dd>
+      <dt>17. Fecha de adjudicación del contrato: </dt>
+      <dd>7 de febrero de 2026.</dd>
+      <dt>18. Fecha de formalización del contrato:</dt>
+      <dd>10 de febrero de 2026.</dd>
+    </dl>
+  </texto>
+</documento>

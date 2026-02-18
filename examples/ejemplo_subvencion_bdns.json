@@ -1,0 +1,15 @@
+{
+  "_comentario": "Ejemplo REAL de convocatoria de subvención procesada desde BDNS (17 febrero 2026)",
+  "_fuente": "https://www.pap.hacienda.gob.es/bdnstrans/api/convocatorias",
+  "_nota": "BOE Explorer obtiene las convocatorias desde la API del BDNS, clasifica por sector/destino y las indexa para búsqueda.",
+
+  "id": 1089263,
+  "numero": "887702",
+  "descripcion": "Resolución de 11 de febrero de 2026, del Instituto de la Mujer de Castilla-La Mancha, por la que se convocan ayudas para la reducción de brechas de género en el ámbito laboral en el año 2026.",
+  "fecha": "2026-02-17",
+  "nivel": "AUTONOMICA",
+  "entidad": "CASTILLA-LA MANCHA",
+  "organo": "INSTITUTO DE LA MUJER DE CASTILLA-LA MANCHA",
+  "mrr": false,
+  "codigo_invente": "INV00003695"
+}
