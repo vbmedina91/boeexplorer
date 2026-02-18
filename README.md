@@ -8,7 +8,7 @@
   <strong>🌐 Demo en vivo: <a href="https://test.pro-eurtec.com/">https://test.pro-eurtec.com/</a></strong>
 </p>
 
-> **Plataforma open-source de análisis, enriquecimiento y visualización de datos públicos del Boletín Oficial del Estado (BOE), Base de Datos Nacional de Subvenciones (BDNS) y Boletín Oficial del Registro Mercantil (BORME).**
+> **Plataforma open-source de análisis, enriquecimiento y visualización de datos públicos del Boletín Oficial del Estado (BOE), Base de Datos Nacional de Subvenciones (BDNS), Boletín Oficial del Registro Mercantil (BORME), Congreso de los Diputados y Promesas Electorales.**
 
 [![PHP 8.x](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Chart.js 4.4.1](https://img.shields.io/badge/Chart.js-4.4.1-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
@@ -38,15 +38,17 @@
 
 ## 🎯 Descripción
 
-BOE Explorer es una plataforma **100% open-source** que agrega, enriquece y cruza datos de las tres principales fuentes de datos abiertos del Estado español:
+BOE Explorer es una plataforma **100% open-source** que agrega, enriquece y cruza datos de las cinco principales fuentes de datos abiertos del Estado español:
 
 | Fuente | Datos |
 |--------|-------|
 | **BOE** | Legislación, licitaciones, adjudicaciones, nombramientos, convenios |
 | **BDNS** | Subvenciones públicas, convocatorias, destinatarios |
 | **BORME** | Registro mercantil, socios, administradores, cargos empresariales |
+| **Congreso** | Votaciones parlamentarias, asistencia, transferencias de voto, correlación por CCAA |
+| **Promesas** | Promesas electorales, cumplimiento, patrimonio de diputados, contradicciones políticas |
 
-El objetivo es **democratizar el acceso** a la información pública, facilitando la detección de patrones de gasto, concentración empresarial, y correlaciones entre regulaciones y contratación pública.
+El objetivo es **democratizar el acceso** a la información pública, facilitando la detección de patrones de gasto, concentración empresarial, actividad parlamentaria y seguimiento de compromisos electorales.
 
 ---
 
@@ -89,48 +91,67 @@ El objetivo es **democratizar el acceso** a la información pública, facilitand
 - Recurrencia empresa-departamento
 - Clasificación de 17 tipos de entidad jurídica española por NIF/CIF
 
+### 🏛 Congreso de los Diputados
+- **Votaciones parlamentarias**: 1,666 votaciones de 114 sesiones (XV Legislatura)
+- **Diagrama Sankey** de transferencias de voto entre partidos
+- **Muro de la Vergüenza**: ranking de diputados por asistencia y patrones de voto
+- **Correlación por CCAA**: análisis de afinidad de voto entre comunidades autónomas
+- **Buscador de diputados**: búsqueda por nombre, filtro por grupo parlamentario, ordenación por nombre/asistencia/votos
+- Tabla de resultados con 8 columnas: ranking, nombre, grupo, asistencia, sí, no, abstención, no_vota
+
+### 📊 Promesas Electorales
+- **Promesómetro**: barras de progreso apiladas por partido (PSOE, Sumar, PP, VOX) con indicadores gobierno/oposición
+- **Buscador de promesas**: filtro por texto libre, partido y estado (cumplida, parcial, en_trámite, incumplida, rechazada)
+- **Nubes de Palabras**: comparativa programa electoral vs. actividad legislativa real, con pestañas por partido
+- **Timeline de Contradicciones**: 7 casos documentados de "lo que dijeron" vs. "lo que hicieron" con referencias BOE
+- **Patrimonio de diputados**: tabla comparativa antes/después de ser electos + gráfico de variación patrimonial
+- **34 promesas reales** con evidencias, timeline y estado de cumplimiento
+- Extracción automatizada de keywords desde PDFs de programas electorales (vía `pdftotext`)
+
 ---
 
 ## 🏗 Arquitectura del sistema
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (SPA)                        │
-│              index.html (~3,000 líneas)                  │
-│     Vanilla JS · Chart.js 4.4.1 · Tailwind CSS          │
-│     71 funciones · 20 gráficos · Dark/Light mode         │
-└───────────────────────┬─────────────────────────────────┘
-                        │ HTTP/JSON
-┌───────────────────────┴─────────────────────────────────┐
-│                     API REST (PHP 8.x)                   │
-│                  api/index.php (router)                   │
-│                    16 endpoints                          │
-├─────────────┬──────────────┬──────────────┬─────────────┤
-│ boe_parser  │ bdns_parser  │ borme_parser │ cross_ref   │
-│   375 LoC   │   680 LoC    │   727 LoC    │  194 LoC    │
-├─────────────┴──────────────┴──────────────┴─────────────┤
-│              data_store.php (743 LoC)                    │
-│      Búsqueda · Análisis · Sectores · Empresas          │
-├─────────────────────────────────────────────────────────┤
-│                  config.php (151 LoC)                    │
-│         Cache · HTTP client · Normalización              │
-└───────────────────────┬─────────────────────────────────┘
-                        │ Flat-file JSON
-┌───────────────────────┴─────────────────────────────────┐
-│                 ALMACENAMIENTO                           │
-│   api/data/boe/YYYY-MM-DD.json  (557+ días)             │
-│   api/data/bdns/convocatorias.json (10K+ registros)      │
-│   api/data/borme/YYYY-MM-DD.json (42+ días)              │
-│   api/data/borme/index.json (índice invertido)           │
-│   api/cache/*.json (TTL: 5-60 min)                       │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      FRONTEND (SPA)                          │
+│                index.html (~4,100 líneas)                     │
+│  Vanilla JS · Chart.js 4.4.1 · Tailwind CSS · WordCloud      │
+│  90+ funciones · 25+ gráficos · Sankey · Dark/Light mode     │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ HTTP/JSON
+┌───────────────────────────┴─────────────────────────────────┐
+│                       API REST (PHP 8.x)                     │
+│                    api/index.php (router)                     │
+│                      18 endpoints                            │
+├──────────┬──────────┬──────────┬──────────┬─────────────────┤
+│ boe_     │ bdns_    │ borme_   │ congreso │ promesas_parser │
+│ parser   │ parser   │ parser   │ _parser  │   367 LoC       │
+│ 375 LoC  │ 680 LoC  │ 727 LoC  │ 568 LoC  │                 │
+├──────────┴──────────┴──────────┴──────────┴─────────────────┤
+│         data_store.php (743 LoC) · cross_ref (194 LoC)       │
+│      Búsqueda · Análisis · Sectores · Empresas · Keywords    │
+├─────────────────────────────────────────────────────────────┤
+│                    config.php (151 LoC)                       │
+│           Cache · HTTP client · Normalización                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ Flat-file JSON
+┌───────────────────────────┴─────────────────────────────────┐
+│                   ALMACENAMIENTO                             │
+│   api/data/boe/YYYY-MM-DD.json  (557+ días)                  │
+│   api/data/bdns/convocatorias.json (10K+ registros)           │
+│   api/data/borme/YYYY-MM-DD.json (42+ días)                   │
+│   api/data/congreso/votaciones/ (114 sesiones, 1666 JSON)    │
+│   api/data/promesas/promesas.json (34 promesas, patrimonio)  │
+│   api/cache/*.json (TTL: 5-60 min)                           │
+└─────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────┐
-│              FUENTES DE DATOS EXTERNAS                   │
-│                                                          │
-│  BOE XML API ─── BDNS REST API ─── BORME PDF/JSON API   │
-│  boe.es          pap.hacienda.gob.es   boe.es/borme     │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                FUENTES DE DATOS EXTERNAS                      │
+│                                                              │
+│  BOE XML ── BDNS REST ── BORME PDF ── Congreso Datos Abiertos│
+│  boe.es    hacienda.gob   boe.es/borme  congreso.es/opendata │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -142,6 +163,7 @@ El objetivo es **democratizar el acceso** a la información pública, facilitand
 | **BOE** (Boletín Oficial del Estado) | REST/XML | `https://www.boe.es/datosabiertos/api` | XML (sumarios + documentos individuales) |
 | **BDNS** (Base Nacional de Subvenciones) | REST/JSON | `https://www.pap.hacienda.gob.es/bdnstrans/api` | JSON (con autenticación XSRF + cookies) |
 | **BORME** (Registro Mercantil) | REST/JSON + PDF | `https://www.boe.es/datosabiertos/api/borme/` | JSON (sumario) + PDF (actas) |
+| **Congreso** (Datos Abiertos) | REST/JSON | `https://www.congreso.es/es/opendata/votaciones` | JSON (sesiones + votaciones individuales) |
 | **Contratación del Estado** | ATOM Feed | `https://contrataciondelestado.es` | XML/ATOM (parser legacy) |
 
 ---
@@ -160,8 +182,10 @@ El objetivo es **democratizar el acceso** a la información pública, facilitand
 ### Frontend
 | Tecnología | Versión | Uso |
 |-----------|---------|-----|
-| **Vanilla JavaScript** | ES2021+ | SPA, 71 funciones, async/await |
-| **Chart.js** | 4.4.1 | 20 gráficos interactivos con drill-down |
+| **Vanilla JavaScript** | ES2021+ | SPA, 90+ funciones, async/await |
+| **Chart.js** | 4.4.1 | 25+ gráficos interactivos con drill-down |
+| **chartjs-chart-sankey** | 0.12.1 | Diagrama Sankey de transferencias de voto |
+| **chartjs-chart-wordcloud** | 4.4.3 | Nubes de palabras (programa vs legislativo) |
 | **Tailwind CSS** | 3.x (CDN) | Diseño responsive, dark mode |
 | **Inter** (Google Fonts) | Variable weight | Tipografía |
 | **Material Symbols** | Outlined | Iconografía |
@@ -174,7 +198,7 @@ El objetivo es **democratizar el acceso** a la información pública, facilitand
 | **Cron** | Actualización diaria automática |
 | **Caché** | Archivos JSON, TTL configurable (5–60 min) |
 
-**Total: ~7,700 líneas de código** (sin datos ni tests)
+**Total: ~11,000+ líneas de código** (sin datos ni tests)
 
 ---
 
@@ -255,13 +279,53 @@ Detección automática de:
 - **Recurrencia**: misma empresa + mismo departamento ≥2 veces
 - **Análisis PYME vs Gran empresa** por volumen de adjudicación
 
+### 8. Parser del Congreso (Votaciones)
+**Archivo:** `api/congreso_parser.php` (568 LoC)
+
+Pipeline de procesamiento de datos abiertos del Congreso:
+```
+API Congreso → Descarga sesiones → JSON votaciones individuales
+→ Agregación por diputado (asistencia, votos Sí/No/Abs/NoVota)
+→ Cálculo de flujos (Sankey) entre grupos parlamentarios
+→ Correlación de voto por CCAA → Rankings (mejores/peores)
+```
+
+**Capacidades:**
+- **1,666 votaciones** procesadas de **114 sesiones** (XV Legislatura)
+- **407 diputados** únicos (incluye reemplazos)
+- **37 flujos** de transferencia de voto entre grupos para diagrama Sankey
+- **19 correlaciones por CCAA** para análisis de afinidad territorial
+- Caché de asistencia incremental para rendimiento
+
+### 9. Parser de Promesas Electorales
+**Archivo:** `api/promesas_parser.php` (367 LoC)
+
+Sistema de seguimiento de compromisos electorales:
+```
+promesas.json → Estadísticas por partido → Búsqueda multi-criterio
+→ Extracción de keywords de PDFs (pdftotext) → Cross-ref con BOE
+→ API JSON con stats, patrimonio, contradicciones
+```
+
+**Funciones principales:**
+- `promesas_stats()` — Agregados por partido: % cumplida, en proceso, incumplida, rechazada
+- `promesas_buscar()` — Búsqueda multi-criterio: texto, partido, categoría, estado
+- `promesas_extract_keywords_from_pdf()` — NLP sobre PDFs de programas electorales (tokenización, stopwords español, top-N keywords)
+- `promesas_buscar_en_boe()` — Cruce de keywords de promesas con datos BOE existentes
+
+**Datos curados:**
+- 34 promesas reales (PSOE: 12, Sumar: 8, PP: 8, VOX: 6) con estados, evidencias y timeline
+- 8 patrimonios de diputados notables (antes/después de ser electos)
+- 7 contradicciones documentadas con referencias BOE
+- Keywords estimadas de programa vs. actividad legislativa por partido
+
 ---
 
 ## 📡 API REST
 
 **Base URL:** `/api/?action=`
 
-### Endpoints principales (16)
+### Endpoints principales (18)
 
 | Endpoint | Params | Descripción |
 |----------|--------|-------------|
@@ -281,6 +345,8 @@ Detección automática de:
 | `socios` | `empresa` | Socios/cargos de empresa desde BORME |
 | `borme-status` | — | Estado de procesamiento BORME |
 | `departamentos` | — | Lista de departamentos únicos (30 días) |
+| **`congreso`** | — | Votaciones, asistencia, Sankey, correlación CCAA (caché 30 min) |
+| **`promesas`** | — | Promesómetro, stats, patrimonio, contradicciones, keywords (caché 1h) |
 
 ### Ejemplo de uso
 
@@ -293,6 +359,12 @@ curl "https://tu-dominio.com/api/?action=socios&empresa=TELEFONICA"
 
 # Análisis de gasto mensual
 curl "https://tu-dominio.com/api/?action=resumen-gasto&periodo=mensual"
+
+# Datos del Congreso (votaciones, Sankey, diputados)
+curl "https://tu-dominio.com/api/?action=congreso"
+
+# Promesas electorales (promesómetro, patrimonio, contradicciones)
+curl "https://tu-dominio.com/api/?action=promesas"
 ```
 
 ---
@@ -324,6 +396,14 @@ api/data/
 │   ├── YYYY-MM-DD.json           # Actas parseadas de todas las provincias del día
 │   ├── index.json                # Índice invertido empresa → fechas
 │   └── meta.json                 # Metadata de procesamiento BORME
+├── congreso/
+│   ├── votaciones/               # 114 directorios de sesión
+│   │   └── sesionNN/             # JSON por cada votación individual
+│   ├── diputados.json            # Índice de diputados y grupos parlamentarios
+│   ├── asistencia_cache.json     # Caché incremental de asistencia
+│   └── meta.json                 # Metadata: 114 sesiones, 1666 votaciones
+├── promesas/
+│   └── promesas.json             # 34 promesas, 8 patrimonios, 7 contradicciones, keywords
 └── .htaccess                     # "Deny from all" (seguridad)
 ```
 
@@ -341,6 +421,8 @@ api/cache/
 | Dashboard | 5 min (rendered: 1h) |
 | Licitaciones | 15 min |
 | Analytics | 1 hora |
+| Congreso | 30 min |
+| Promesas | 1 hora |
 
 ---
 
@@ -364,7 +446,7 @@ cd boeexplorer
 sudo apt-get install poppler-utils
 
 # 3. Crear directorios de datos
-mkdir -p api/data/boe api/data/bdns api/data/borme api/cache
+mkdir -p api/data/boe api/data/bdns api/data/borme api/data/congreso api/data/promesas api/cache
 
 # 4. Configurar permisos
 chmod 755 api/data api/cache
@@ -469,6 +551,13 @@ Abre un issue con la etiqueta `enhancement` describiendo:
 
 ## 🗺 Roadmap
 
+### ✅ Completado
+- [x] **Congreso de los Diputados** — Votaciones, Sankey, asistencia, correlación CCAA, buscador de diputados
+- [x] **Promesas Electorales** — Promesómetro, nubes de palabras, timeline de contradicciones, patrimonio
+- [x] **Extracción de keywords desde PDFs** — vía pdftotext sobre programas electorales
+- [x] **Cross-reference promesas ↔ BOE** — Búsqueda automática de keywords en datos BOE existentes
+
+### 🔜 Pendiente
 - [ ] Boletines autonómicos (DOGC, BOJA, BOCM, etc.)
 - [ ] Exportación de datos (CSV, Excel, JSON)
 - [ ] Mapas interactivos por CCAA con datos georreferenciados
@@ -479,6 +568,8 @@ Abre un issue con la etiqueta `enhancement` describiendo:
 - [ ] PWA con soporte offline
 - [ ] Análisis de redes: grafos de relaciones empresa-departamento
 - [ ] Machine Learning para clasificación temática
+- [ ] Ampliar promesas a más partidos (ERC, PNV, Bildu, JxCAT)
+- [ ] Automatización completa de keywords con PDFs reales de programas
 
 ---
 
@@ -490,8 +581,8 @@ Este proyecto está bajo la licencia **MIT**. Ver [LICENSE](LICENSE) para más d
 
 ## 🙏 Créditos
 
-- **Datos:** [BOE](https://www.boe.es/datosabiertos/), [BDNS](https://www.pap.hacienda.gob.es/bdnstrans/), [BORME](https://www.boe.es/diario_borme/)
-- **Herramientas:** PHP, Chart.js, Tailwind CSS, poppler-utils
+- **Datos:** [BOE](https://www.boe.es/datosabiertos/), [BDNS](https://www.pap.hacienda.gob.es/bdnstrans/), [BORME](https://www.boe.es/diario_borme/), [Congreso Datos Abiertos](https://www.congreso.es/es/datos-abiertos)
+- **Herramientas:** PHP, Chart.js, chartjs-chart-sankey, chartjs-chart-wordcloud, Tailwind CSS, poppler-utils
 
 ---
 
