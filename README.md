@@ -4,12 +4,17 @@
   <img src="screen.png" alt="BOE Explorer Dashboard" width="800"/>
 </p>
 
+<p align="center">
+  <strong>🌐 Demo en vivo: <a href="https://test.pro-eurtec.com/">https://test.pro-eurtec.com/</a></strong>
+</p>
+
 > **Plataforma open-source de análisis, enriquecimiento y visualización de datos públicos del Boletín Oficial del Estado (BOE), Base de Datos Nacional de Subvenciones (BDNS) y Boletín Oficial del Registro Mercantil (BORME).**
 
 [![PHP 8.x](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Chart.js 4.4.1](https://img.shields.io/badge/Chart.js-4.4.1-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://test.pro-eurtec.com/)
 
 ---
 
