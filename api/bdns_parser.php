@@ -563,43 +563,58 @@ function bdns_resumen($params = []) {
     
     // By level (ESTATAL/AUTONOMICO/LOCAL)
     $porNivel = [];
+    $eurosPorNivel = [];
     foreach ($convocatorias as $c) {
         $n = $c['nivel'] ?: 'Sin especificar';
         $porNivel[$n] = ($porNivel[$n] ?? 0) + 1;
+        $eurosPorNivel[$n] = ($eurosPorNivel[$n] ?? 0) + ($c['presupuesto'] ?? 0);
     }
     arsort($porNivel);
+    arsort($eurosPorNivel);
     
     // By entity (nivel2)
     $porEntidad = [];
+    $eurosPorEntidad = [];
     foreach ($convocatorias as $c) {
         $e = $c['entidad'] ?: 'Sin especificar';
         $porEntidad[$e] = ($porEntidad[$e] ?? 0) + 1;
+        $eurosPorEntidad[$e] = ($eurosPorEntidad[$e] ?? 0) + ($c['presupuesto'] ?? 0);
     }
     arsort($porEntidad);
+    arsort($eurosPorEntidad);
     
     // By organ (nivel3 = department)
     $porOrgano = [];
+    $eurosPorOrgano = [];
     foreach ($convocatorias as $c) {
         $o = $c['organo'] ?: 'Sin especificar';
         $porOrgano[$o] = ($porOrgano[$o] ?? 0) + 1;
+        $eurosPorOrgano[$o] = ($eurosPorOrgano[$o] ?? 0) + ($c['presupuesto'] ?? 0);
     }
     arsort($porOrgano);
+    arsort($eurosPorOrgano);
     
     // By sector (classified from description)
     $porSector = [];
+    $eurosPorSector = [];
     foreach ($convocatorias as $c) {
         $s = bdns_clasificar_sector($c['descripcion']);
         $porSector[$s] = ($porSector[$s] ?? 0) + 1;
+        $eurosPorSector[$s] = ($eurosPorSector[$s] ?? 0) + ($c['presupuesto'] ?? 0);
     }
     arsort($porSector);
+    arsort($eurosPorSector);
     
     // By destination (detected from description + nivel)
     $porDestino = [];
+    $eurosPorDestino = [];
     foreach ($convocatorias as $c) {
         $d = bdns_detectar_destino($c['descripcion'], $c['nivel'], $c['entidad']);
         $porDestino[$d] = ($porDestino[$d] ?? 0) + 1;
+        $eurosPorDestino[$d] = ($eurosPorDestino[$d] ?? 0) + ($c['presupuesto'] ?? 0);
     }
     arsort($porDestino);
+    arsort($eurosPorDestino);
     
     // By date (timeline)
     $porFecha = [];
@@ -611,17 +626,33 @@ function bdns_resumen($params = []) {
     
     // By month
     $porMes = [];
+    $eurosPorMes = [];
     foreach ($convocatorias as $c) {
         $f = $c['fecha'] ?? '';
         if (strlen($f) >= 7) {
             $mes = substr($f, 0, 7);
             $porMes[$mes] = ($porMes[$mes] ?? 0) + 1;
+            $eurosPorMes[$mes] = ($eurosPorMes[$mes] ?? 0) + ($c['presupuesto'] ?? 0);
         }
     }
     ksort($porMes);
+    ksort($eurosPorMes);
     
     // MRR (Plan de Recuperación)
     $mrr = count(array_filter($convocatorias, fn($c) => !empty($c['mrr'])));
+    
+    // Grand totals
+    $totalPresupuesto = 0;
+    $conPresupuesto = 0;
+    foreach ($convocatorias as $c) {
+        $p = $c['presupuesto'] ?? 0;
+        if ($p > 0) { $totalPresupuesto += $p; $conPresupuesto++; }
+    }
+    
+    // Per-nivel totals for KPI
+    $eurosEstatal = $eurosPorNivel['ESTATAL'] ?? ($eurosPorNivel['ESTADO'] ?? 0);
+    $eurosAutonomico = $eurosPorNivel['AUTONOMICO'] ?? ($eurosPorNivel['AUTONOMICA'] ?? 0);
+    $eurosLocal = $eurosPorNivel['LOCAL'] ?? 0;
     
     return [
         'total_convocatorias' => count($convocatorias),
@@ -629,16 +660,149 @@ function bdns_resumen($params = []) {
         'fecha_min' => $meta['fecha_min'] ?? null,
         'fecha_max' => $meta['fecha_max'] ?? null,
         'mrr_count' => $mrr,
+        'total_presupuesto' => $totalPresupuesto,
+        'con_presupuesto' => $conPresupuesto,
+        'euros_estatal' => $eurosEstatal,
+        'euros_autonomico' => $eurosAutonomico,
+        'euros_local' => $eurosLocal,
         'por_nivel' => $porNivel,
+        'euros_por_nivel' => $eurosPorNivel,
         'por_entidad' => array_slice($porEntidad, 0, 30, true),
+        'euros_por_entidad' => array_slice($eurosPorEntidad, 0, 30, true),
         'por_organo' => array_slice($porOrgano, 0, 30, true),
+        'euros_por_organo' => array_slice($eurosPorOrgano, 0, 30, true),
         'por_sector' => $porSector,
+        'euros_por_sector' => $eurosPorSector,
         'por_destino' => array_slice($porDestino, 0, 20, true),
+        'euros_por_destino' => array_slice($eurosPorDestino, 0, 20, true),
         'por_destino_intl' => array_filter($porDestino, fn($v, $k) => !str_starts_with($k, 'España'), ARRAY_FILTER_USE_BOTH),
+        'euros_por_destino_intl' => array_filter($eurosPorDestino, fn($v, $k) => !str_starts_with($k, 'España'), ARRAY_FILTER_USE_BOTH),
         'por_fecha' => array_slice($porFecha, -60, null, true),
         'por_mes' => $porMes,
+        'euros_por_mes' => $eurosPorMes,
         'ultimas' => array_slice($convocatorias, 0, 20),
     ];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRESUPUESTO ENRICHMENT (v2.1 API)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Fetch presupuesto (budget amount) for a single convocatoria
+ * Uses the BDNS v2.1 public REST API which returns financiacion details
+ * Returns: float total importe in EUR, or null on failure
+ */
+function bdns_fetch_presupuesto($numero_convocatoria, $xsrf = null, $cookies = null) {
+    $url = "https://www.pap.hacienda.gob.es/bdnstrans/GE/es/api/v2.1/convocatoria/{$numero_convocatoria}";
+    
+    $headers = ['Accept: application/json'];
+    if ($xsrf) $headers[] = "X-XSRF-TOKEN: $xsrf";
+    
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPHEADER     => $headers,
+        CURLOPT_USERAGENT      => 'BOEExplorer/3.0 (SubvencionesMonitor)',
+    ]);
+    if ($cookies) curl_setopt($ch, CURLOPT_COOKIE, $cookies);
+    
+    $resp = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($code !== 200 || !$resp) return null;
+    
+    $data = json_decode($resp, true);
+    if (!$data || !isset($data[0]['convocatoria']['financiacion'])) return null;
+    
+    $fin = $data[0]['convocatoria']['financiacion'];
+    if (!is_array($fin)) return 0;
+    
+    $total = 0;
+    foreach ($fin as $f) {
+        if (is_array($f)) $total += (float)($f['importe'] ?? 0);
+    }
+    
+    return $total;
+}
+
+/**
+ * Enrich all stored convocatorias with presupuesto data
+ * Skips records that already have a presupuesto field.
+ * Rate-limited to be respectful to the API.
+ * 
+ * @param bool $verbose  Print progress
+ * @param int  $limit    Max records to enrich per run (0 = all)
+ * @return array Stats: ['enriched' => N, 'skipped' => N, 'failed' => N]
+ */
+function bdns_enrich_presupuestos($verbose = false, $limit = 0) {
+    $xsrf = bdns_init_session();
+    if (!$xsrf) {
+        if ($verbose) echo "  [BDNS] ERROR: Could not init session for presupuesto enrichment\n";
+        return ['enriched' => 0, 'skipped' => 0, 'failed' => 0];
+    }
+    
+    $convocatorias = bdns_load_convocatorias();
+    $cookies = $GLOBALS['bdns_session']['cookies'];
+    $enriched = 0; $skipped = 0; $failed = 0;
+    $modified = false;
+    $batchSize = 50; // Save every N records
+    
+    foreach ($convocatorias as $i => &$c) {
+        if (isset($c['presupuesto'])) { $skipped++; continue; }
+        if ($limit > 0 && $enriched + $failed >= $limit) break;
+        
+        $num = $c['numero'] ?? null;
+        if (!$num) { $skipped++; continue; }
+        
+        $importe = bdns_fetch_presupuesto($num, $xsrf, $cookies);
+        
+        if ($importe !== null) {
+            $c['presupuesto'] = $importe;
+            $enriched++;
+            $modified = true;
+        } else {
+            // Mark as checked so we don't retry every time
+            $c['presupuesto'] = 0;
+            $failed++;
+            $modified = true;
+        }
+        
+        // Save periodically
+        if ($modified && ($enriched + $failed) % $batchSize === 0) {
+            bdns_save_convocatorias_inplace($convocatorias);
+            if ($verbose) echo "  [BDNS presupuesto] Progress: $enriched enriched, $failed failed, $skipped skipped (batch save)\n";
+        }
+        
+        // Re-init session every 500 requests
+        if (($enriched + $failed) % 500 === 0) {
+            $xsrf = bdns_init_session();
+            $cookies = $GLOBALS['bdns_session']['cookies'];
+        }
+        
+        usleep(150000); // 150ms rate limit
+    }
+    unset($c);
+    
+    // Final save
+    if ($modified) {
+        bdns_save_convocatorias_inplace($convocatorias);
+    }
+    
+    if ($verbose) echo "  [BDNS presupuesto] Done: $enriched enriched, $failed failed, $skipped skipped\n";
+    return ['enriched' => $enriched, 'skipped' => $skipped, 'failed' => $failed];
+}
+
+/**
+ * Save convocatorias array directly (in-place update, no merge)
+ */
+function bdns_save_convocatorias_inplace($convocatorias) {
+    bdns_ensure_dir();
+    $file = BDNS_DATA_DIR . '/convocatorias.json';
+    file_put_contents($file, json_encode($convocatorias, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
 }
 
 // ═══════════════════════════════════════════════════════════════

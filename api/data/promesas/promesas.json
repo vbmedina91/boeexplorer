@@ -1,0 +1,1012 @@
+{
+  "meta": {
+    "version": "1.0",
+    "updated": "2026-02-18",
+    "legislatura": "XV",
+    "nota": "Datos curados de programas electorales 23J, seguimiento legislativo vía BOE y Congreso. Keywords estimadas del análisis textual de programas."
+  },
+  "gobierno": {
+    "tipo": "Coalición",
+    "partidos": ["PSOE", "Sumar"],
+    "investidura": "2023-11-16",
+    "presidente": "Pedro Sánchez Pérez-Castejón",
+    "mayoria_necesaria": 176,
+    "votos_investidura": 179
+  },
+  "categorias": [
+    "Vivienda", "Empleo", "Economía", "Salud", "Educación", "Justicia",
+    "Medio Ambiente", "Igualdad", "Pensiones", "Seguridad", "Inmigración",
+    "Democracia", "Energía", "Industria", "Transporte", "Fiscalidad",
+    "Derechos Sociales", "Agricultura", "Defensa", "Política Territorial"
+  ],
+  "partidos": {
+    "PSOE": {
+      "nombre": "Partido Socialista Obrero Español",
+      "siglas": "PSOE",
+      "rol": "Gobierno (partido principal)",
+      "color": "#E30613",
+      "programa_url": "https://www.psoe.es/media-content/2023/07/Programa-Electoral-PSOE-23J.pdf",
+      "promesas": [
+        {
+          "id": "psoe-001",
+          "titulo": "Reducción jornada laboral a 37,5 horas semanales",
+          "descripcion": "Reducir la jornada laboral máxima legal de 40 a 37,5 horas semanales sin reducción salarial.",
+          "categoria": "Empleo",
+          "estado": "en_tramite",
+          "progreso": 50,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Anteproyecto de Ley", "fecha": "2024-06-15", "titulo": "Anteproyecto presentado en mesa de diálogo social"},
+            {"tipo": "prensa", "referencia": "Negociación CEOE/Sindicatos", "fecha": "2025-01-20", "titulo": "Patronal rechaza la propuesta; sindicatos la apoyan"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral campaña 23J"},
+            {"fecha": "2023-11-24", "evento": "Incluida en acuerdo de coalición PSOE-Sumar"},
+            {"fecha": "2024-06-15", "evento": "Anteproyecto en mesa de diálogo social"},
+            {"fecha": "2025-01-20", "evento": "Negociación bloqueada con patronal"}
+          ]
+        },
+        {
+          "id": "psoe-002",
+          "titulo": "184.000 viviendas públicas en la legislatura",
+          "descripcion": "Construir 184.000 viviendas de alquiler asequible (43.000/año) a través de la empresa pública de vivienda.",
+          "categoria": "Vivienda",
+          "estado": "incumplida",
+          "progreso": 10,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "El País 2025-03", "fecha": "2025-03-15", "titulo": "Solo 4.200 viviendas iniciadas en 18 meses de legislatura"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral: 43.000 viviendas/año"},
+            {"fecha": "2024-05-20", "evento": "Creación empresa pública de vivienda"},
+            {"fecha": "2025-03-15", "evento": "4.200 viviendas iniciadas (2,3% del objetivo)"}
+          ]
+        },
+        {
+          "id": "psoe-003",
+          "titulo": "Impuesto permanente a banca y energéticas",
+          "descripcion": "Convertir en permanentes los gravámenes temporales a banca y grandes empresas energéticas.",
+          "categoria": "Fiscalidad",
+          "estado": "parcial",
+          "progreso": 60,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "BOE-A-2024-26930", "fecha": "2024-12-22", "titulo": "Prórroga gravamen banca y energéticas 2025"},
+            {"tipo": "congreso", "referencia": "PL permanencia", "fecha": "2025-06-01", "titulo": "Proposición de ley para hacer permanente el gravamen"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: hacer permanente el impuesto temporal"},
+            {"fecha": "2024-12-22", "evento": "Prorrogado para 2025 (temporal)"},
+            {"fecha": "2025-06-01", "evento": "PL en trámite para hacerlo definitivo"}
+          ]
+        },
+        {
+          "id": "psoe-004",
+          "titulo": "Blindar pensiones con el IPC en la Constitución",
+          "descripcion": "Reforma constitucional para garantizar que las pensiones se revaloricen siempre con el IPC.",
+          "categoria": "Pensiones",
+          "estado": "incumplida",
+          "progreso": 5,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Sin iniciativa registrada", "fecha": "2025-12-01", "titulo": "No se ha presentado propuesta de reforma constitucional"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-01-01", "evento": "Pensiones sí se revalorizan con IPC (ley ordinaria, no constitucional)"}
+          ]
+        },
+        {
+          "id": "psoe-005",
+          "titulo": "Ley de Amnistía",
+          "descripcion": "Aprobar una ley de amnistía para los encausados por el proceso independentista catalán.",
+          "categoria": "Política Territorial",
+          "estado": "cumplida",
+          "progreso": 100,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "BOE-A-2024-11398", "fecha": "2024-06-11", "titulo": "LO 1/2024 de amnistía para la normalización institucional en Cataluña", "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2024-11398"}
+          ],
+          "timeline": [
+            {"fecha": "2023-09-01", "evento": "Negociación con Junts para investidura"},
+            {"fecha": "2023-11-09", "evento": "Acuerdo PSOE-Junts incluye amnistía"},
+            {"fecha": "2024-03-14", "evento": "Aprobada en el Congreso"},
+            {"fecha": "2024-06-11", "evento": "Publicada en BOE: LO 1/2024"}
+          ]
+        },
+        {
+          "id": "psoe-006",
+          "titulo": "Renovación del CGPJ",
+          "descripcion": "Desbloquear la renovación del Consejo General del Poder Judicial tras 5 años de bloqueo.",
+          "categoria": "Justicia",
+          "estado": "cumplida",
+          "progreso": 100,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "BOE-A-2024-14498", "fecha": "2024-07-17", "titulo": "Nombramiento nuevos vocales del CGPJ"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa de renovación"},
+            {"fecha": "2024-06-25", "evento": "Acuerdo PP-PSOE para renovación"},
+            {"fecha": "2024-07-17", "evento": "CGPJ renovado tras 5 años"}
+          ]
+        },
+        {
+          "id": "psoe-007",
+          "titulo": "Subida del SMI al 60% del salario medio",
+          "descripcion": "Incrementar el Salario Mínimo Interprofesional progresivamente hasta alcanzar el 60% del salario medio.",
+          "categoria": "Empleo",
+          "estado": "parcial",
+          "progreso": 85,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "BOE-A-2024-2250", "fecha": "2024-02-07", "titulo": "RD 145/2024 SMI 2024: 1.134€/mes"},
+            {"tipo": "boe", "referencia": "BOE-A-2025-1890", "fecha": "2025-02-05", "titulo": "RD SMI 2025: 1.184€/mes"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: SMI al 60% del salario medio"},
+            {"fecha": "2024-02-07", "evento": "SMI 2024: 1.134€ (15.876€/año)"},
+            {"fecha": "2025-02-05", "evento": "SMI 2025: 1.184€ (16.576€/año) — ~58% del salario medio"}
+          ]
+        },
+        {
+          "id": "psoe-008",
+          "titulo": "Presupuestos Generales del Estado 2024",
+          "descripcion": "Aprobar unos nuevos Presupuestos Generales del Estado adaptados a las necesidades actuales.",
+          "categoria": "Economía",
+          "estado": "incumplida",
+          "progreso": 0,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Sin proyecto de ley", "fecha": "2025-12-01", "titulo": "Presupuestos de 2023 prorrogados durante toda la legislatura"}
+          ],
+          "timeline": [
+            {"fecha": "2023-11-16", "evento": "Investidura sin compromiso PGE inmediatos"},
+            {"fecha": "2024-09-30", "evento": "Gobierno anuncia que no presentará PGE 2024"},
+            {"fecha": "2025-09-30", "evento": "Tampoco PGE 2025 — se prorrogan los de 2023"}
+          ]
+        },
+        {
+          "id": "psoe-009",
+          "titulo": "Plan Nacional de Salud Mental",
+          "descripcion": "Dotación presupuestaria para un Plan Nacional de Salud Mental con atención universal.",
+          "categoria": "Salud",
+          "estado": "parcial",
+          "progreso": 30,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "Estrategia aprobada en Consejo Interterritorial", "fecha": "2024-09-10", "titulo": "Estrategia de Salud Mental del SNS actualizada pero sin presupuesto específico"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: salud mental como prioridad"},
+            {"fecha": "2024-09-10", "evento": "Estrategia actualizada, ejecución limitada por falta de PGE"}
+          ]
+        },
+        {
+          "id": "psoe-010",
+          "titulo": "Prohibición permanente de desahucios a vulnerables",
+          "descripcion": "Convertir en permanente la prohibición de desahucios de hogares vulnerables sin alternativa habitacional.",
+          "categoria": "Vivienda",
+          "estado": "parcial",
+          "progreso": 40,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "RDL sucesivos", "fecha": "2025-06-01", "titulo": "Moratorias prorrogadas semestralmente pero no definitivas"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: prohibición permanente"},
+            {"fecha": "2024-06-30", "evento": "Prórroga semestral moratorias desahucios"},
+            {"fecha": "2025-06-01", "evento": "Nueva prórroga — sigue sin ser permanente"}
+          ]
+        },
+        {
+          "id": "psoe-011",
+          "titulo": "Educación infantil 0-3 años universal y gratuita",
+          "descripcion": "Universalizar la educación infantil de primer ciclo (0-3 años) con plazas públicas gratuitas.",
+          "categoria": "Educación",
+          "estado": "en_tramite",
+          "progreso": 25,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "Plan ejecutado parcialmente por CCAA", "fecha": "2025-01-15", "titulo": "35.000 nuevas plazas creadas de las 65.000 previstas"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-03-01", "evento": "Convenios con CCAA para creación de plazas"},
+            {"fecha": "2025-01-15", "evento": "35.000 plazas de 65.000 objetivo — 54% avance en plazas"}
+          ]
+        },
+        {
+          "id": "psoe-012",
+          "titulo": "Reforma integral del sistema de cuidados",
+          "descripcion": "Reforma del sistema de atención a la dependencia para reducir listas de espera y mejorar ratios.",
+          "categoria": "Derechos Sociales",
+          "estado": "en_tramite",
+          "progreso": 20,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Proposición no de ley debatida", "fecha": "2024-11-15", "titulo": "PNL sobre reforma sistema dependencia aprobada en comisión"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-11-15", "evento": "PNL aprobada pero sin rango de ley"}
+          ]
+        }
+      ],
+      "keywords_programa": [
+        ["España", 185], ["social", 162], ["personas", 148], ["público", 142],
+        ["derechos", 135], ["empleo", 128], ["trabajo", 118], ["igualdad", 95],
+        ["mujeres", 92], ["salud", 88], ["vivienda", 85], ["educación", 82],
+        ["jóvenes", 78], ["digital", 72], ["Europa", 68], ["clima", 65],
+        ["economía", 62], ["democracia", 58], ["seguridad", 55], ["familia", 52],
+        ["pensiones", 48], ["cultura", 45], ["ciencia", 42], ["rural", 38],
+        ["autónomos", 35], ["industria", 32], ["justicia", 30], ["cuidados", 28],
+        ["diversidad", 25], ["transparencia", 22]
+      ],
+      "keywords_legislativo": [
+        ["amnistía", 45], ["social", 42], ["medidas urgentes", 38], ["prórroga", 35],
+        ["salario mínimo", 32], ["suministros", 28], ["vulnerables", 25],
+        ["energía", 22], ["vivienda", 20], ["familias", 18], ["tributario", 16],
+        ["pensiones", 15], ["empleo", 14], ["transporte", 12], ["Cataluña", 28],
+        ["normalización", 22], ["presupuestario", 10], ["seguridad social", 18],
+        ["consumidores", 8], ["extranjería", 12], ["dependencia", 8],
+        ["discapacidad", 7], ["telecomunicaciones", 6], ["defensa", 5],
+        ["educación", 4], ["cultura", 3], ["ciencia", 2], ["industria", 4],
+        ["igualdad", 6], ["digital", 5]
+      ]
+    },
+    "Sumar": {
+      "nombre": "Sumar - Movimiento Sumar",
+      "siglas": "Sumar",
+      "rol": "Gobierno (coalición minoritaria)",
+      "color": "#E6007E",
+      "programa_url": "https://sumar.es/programa/",
+      "promesas": [
+        {
+          "id": "sumar-001",
+          "titulo": "Reducción jornada laboral a 37,5 horas",
+          "descripcion": "Bandera de Sumar: reducir la jornada máxima legal a 37,5h semanales sin reducción salarial.",
+          "categoria": "Empleo",
+          "estado": "en_tramite",
+          "progreso": 50,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Anteproyecto Yolanda Díaz", "fecha": "2024-06-15", "titulo": "Vicepresidenta Díaz presenta anteproyecto de reducción de jornada"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa estrella de Sumar"},
+            {"fecha": "2023-11-24", "evento": "Incluida en acuerdo de coalición"},
+            {"fecha": "2024-06-15", "evento": "Anteproyecto presentado"},
+            {"fecha": "2025-01-20", "evento": "Negociación bloqueada con CEOE"}
+          ]
+        },
+        {
+          "id": "sumar-002",
+          "titulo": "Regulación nacional del alquiler turístico",
+          "descripcion": "Ley nacional para que los municipios puedan limitar y regular los pisos turísticos.",
+          "categoria": "Vivienda",
+          "estado": "en_tramite",
+          "progreso": 30,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Proposición de ley registrada", "fecha": "2024-10-01", "titulo": "PL regulación pisos turísticos registrada en el Congreso"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-10-01", "evento": "Proposición de ley registrada"},
+            {"fecha": "2025-03-01", "evento": "En trámite de comisión"}
+          ]
+        },
+        {
+          "id": "sumar-003",
+          "titulo": "Cobertura dental universal en el SNS",
+          "descripcion": "Incluir progresivamente la atención dental completa en la cartera de servicios del Sistema Nacional de Salud.",
+          "categoria": "Salud",
+          "estado": "parcial",
+          "progreso": 20,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "Plan piloto en 3 CCAA", "fecha": "2025-01-10", "titulo": "Programa piloto de odontología pública en Comunidad Valenciana, Navarra y Asturias"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-09-01", "evento": "Convenio con 3 CCAA para plan piloto"},
+            {"fecha": "2025-01-10", "evento": "Programa piloto activo, cobertura limitada"}
+          ]
+        },
+        {
+          "id": "sumar-004",
+          "titulo": "IVA 0% permanente en alimentos básicos",
+          "descripcion": "Hacer permanente la reducción del IVA al 0% en alimentos de primera necesidad.",
+          "categoria": "Fiscalidad",
+          "estado": "parcial",
+          "progreso": 60,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "RDL sucesivos", "fecha": "2025-06-01", "titulo": "IVA reducido prorrogado pero no permanente — sigue siendo temporal"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: IVA 0% permanente"},
+            {"fecha": "2024-06-30", "evento": "Prórroga semestral"},
+            {"fecha": "2025-01-01", "evento": "Prorrogado de nuevo pero sin legislación definitiva"}
+          ]
+        },
+        {
+          "id": "sumar-005",
+          "titulo": "Ley de Atención Integral a la ELA",
+          "descripcion": "Aprobar una ley específica para garantizar la atención integral a personas con ELA y enfermedades neurodegenerativas.",
+          "categoria": "Salud",
+          "estado": "en_tramite",
+          "progreso": 45,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL en comisión de Sanidad", "fecha": "2025-02-01", "titulo": "Proposición de ley en fase de ponencia"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-05-01", "evento": "PL registrada con apoyo multipartido"},
+            {"fecha": "2025-02-01", "evento": "En fase de ponencia en comisión"}
+          ]
+        },
+        {
+          "id": "sumar-006",
+          "titulo": "Impuesto a grandes fortunas permanente",
+          "descripcion": "Hacer permanente el Impuesto de Solidaridad a las Grandes Fortunas creado en 2022.",
+          "categoria": "Fiscalidad",
+          "estado": "parcial",
+          "progreso": 50,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "Ley 38/2022", "fecha": "2022-12-28", "titulo": "Impuesto temporal creado; pendiente hacerlo permanente"},
+            {"tipo": "congreso", "referencia": "Debate de permanencia", "fecha": "2025-06-01", "titulo": "Pendiente de inclusión en futuros PGE"}
+          ],
+          "timeline": [
+            {"fecha": "2022-12-28", "evento": "Impuesto creado como temporal (Ley 38/2022)"},
+            {"fecha": "2023-07-23", "evento": "Sumar promete hacerlo permanente"},
+            {"fecha": "2025-06-01", "evento": "Sigue siendo temporal, renovado anualmente"}
+          ]
+        },
+        {
+          "id": "sumar-007",
+          "titulo": "Transporte público gratuito para jóvenes",
+          "descripcion": "Abono de transporte público gratuito para menores de 30 años.",
+          "categoria": "Transporte",
+          "estado": "parcial",
+          "progreso": 45,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "Bonos transporte", "fecha": "2024-01-01", "titulo": "Descuentos del 50-100% mantenidos en Cercanías y Media Distancia"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: gratuito para jóvenes"},
+            {"fecha": "2024-01-01", "evento": "Descuentos importantes pero no gratuidad total"},
+            {"fecha": "2025-01-01", "evento": "Bonos renovados con descuentos parciales"}
+          ]
+        },
+        {
+          "id": "sumar-008",
+          "titulo": "Prohibición de publicidad de casas de apuestas",
+          "descripcion": "Prohibir la publicidad de juegos de azar y casas de apuestas en todos los medios.",
+          "categoria": "Derechos Sociales",
+          "estado": "parcial",
+          "progreso": 55,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "boe", "referencia": "RD 958/2020", "fecha": "2020-11-03", "titulo": "Restricciones a publicidad del juego (legislatura anterior) — pendiente ampliación"}
+          ],
+          "timeline": [
+            {"fecha": "2020-11-03", "evento": "Restricciones parciales aprobadas (RD 958/2020)"},
+            {"fecha": "2023-07-23", "evento": "Sumar promete prohibición total"},
+            {"fecha": "2025-06-01", "evento": "Sin avance legislativo adicional"}
+          ]
+        }
+      ],
+      "keywords_programa": [
+        ["trabajo", 145], ["jornada", 98], ["vivienda", 92], ["alquiler", 85],
+        ["salud", 82], ["público", 135], ["derechos", 128], ["igualdad", 88],
+        ["jóvenes", 82], ["mujeres", 78], ["cuidados", 72], ["pensiones", 65],
+        ["clima", 62], ["energía", 58], ["digital", 45], ["cultura", 42],
+        ["educación", 75], ["autónomos", 38], ["transporte", 48], ["fiscal", 55],
+        ["democracia", 42], ["rural", 35], ["industria", 32], ["ciencia", 28],
+        ["diversidad", 45], ["feminismo", 52], ["ecología", 48], ["paz", 25],
+        ["cooperación", 22], ["transparencia", 20]
+      ],
+      "keywords_legislativo": [
+        ["jornada", 15], ["laboral", 22], ["vivienda", 12], ["alquiler", 10],
+        ["turístico", 8], ["salud", 6], ["dental", 5], ["IVA", 12],
+        ["alimentos", 8], ["transporte", 10], ["bonificación", 8],
+        ["apuestas", 4], ["publicidad", 3], ["ELA", 6], ["dependencia", 5],
+        ["fortunas", 4], ["impuesto", 8], ["regulación", 6], ["jóvenes", 4],
+        ["energía", 3], ["igualdad", 4], ["mujeres", 3], ["cultura", 2],
+        ["educación", 2], ["cuidados", 3], ["pensiones", 5], ["rural", 1],
+        ["industria", 2], ["diversidad", 2], ["cooperación", 1]
+      ]
+    },
+    "PP": {
+      "nombre": "Partido Popular",
+      "siglas": "PP",
+      "rol": "Oposición (principal)",
+      "color": "#1D71B8",
+      "programa_url": "https://www.pp.es/sites/default/files/documentos/programa-electoral-elecciones-generales-2023.pdf",
+      "promesas": [
+        {
+          "id": "pp-001",
+          "titulo": "Rebaja generalizada del IRPF",
+          "descripcion": "Deflactar la tarifa del IRPF y reducir tipos impositivos para todas las rentas.",
+          "categoria": "Fiscalidad",
+          "estado": "solo_ccaa",
+          "progreso": 30,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "Rebajas IRPF autonómico", "fecha": "2024-01-01", "titulo": "Madrid, Andalucía, Galicia y otras CCAA del PP rebajan IRPF autonómico"},
+            {"tipo": "congreso", "referencia": "PL rechazada", "fecha": "2024-10-15", "titulo": "Proposición de ley de rebaja fiscal rechazada en el Congreso"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral: bajada de impuestos"},
+            {"fecha": "2024-01-01", "evento": "Rebajas aplicadas en CCAA que gobiernan"},
+            {"fecha": "2024-10-15", "evento": "PL para rebaja estatal rechazada en Congreso"}
+          ]
+        },
+        {
+          "id": "pp-002",
+          "titulo": "Derogar la Ley de Memoria Democrática",
+          "descripcion": "Derogar la Ley 20/2022 de Memoria Democrática aprobada por el Gobierno.",
+          "categoria": "Democracia",
+          "estado": "solo_ccaa",
+          "progreso": 25,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "Derogaciones autonómicas", "fecha": "2024-03-01", "titulo": "Aragón, Castilla y León y otras CCAA derogan sus leyes de memoria autonómicas"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-03-01", "evento": "Derogación en CCAA donde gobiernan PP o PP+VOX"}
+          ]
+        },
+        {
+          "id": "pp-003",
+          "titulo": "Reforma del sistema migratorio",
+          "descripcion": "Endurecer la política migratoria, reforzar FRONTEX y acelerar devoluciones.",
+          "categoria": "Inmigración",
+          "estado": "rechazada",
+          "progreso": 10,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL de extranjería rechazada", "fecha": "2024-09-10", "titulo": "Proposición de ley PP sobre inmigración rechazada en pleno"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa: control de fronteras"},
+            {"fecha": "2024-09-10", "evento": "PL rechazada en el Congreso"}
+          ]
+        },
+        {
+          "id": "pp-004",
+          "titulo": "Pacto de Estado por la Justicia",
+          "descripcion": "Promover un gran pacto transversal para reformar la justicia: digitalización, plazos, medios.",
+          "categoria": "Justicia",
+          "estado": "no_iniciada",
+          "progreso": 5,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PNL debatida", "fecha": "2024-12-01", "titulo": "PNL debatida en comisión de Justicia pero sin acuerdo"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-12-01", "evento": "PNL debatida sin resultado concreto"}
+          ]
+        },
+        {
+          "id": "pp-005",
+          "titulo": "Plan Nacional del Agua",
+          "descripcion": "Plan hidrológico nacional con trasvases, desaladoras y modernización de regadíos.",
+          "categoria": "Agricultura",
+          "estado": "rechazada",
+          "progreso": 5,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PNL rechazada", "fecha": "2024-07-01", "titulo": "Proposición no de ley sobre plan hidrológico rechazada"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-07-01", "evento": "PNL rechazada en pleno"}
+          ]
+        },
+        {
+          "id": "pp-006",
+          "titulo": "Bajada del IVA energético permanente",
+          "descripcion": "Reducir permanentemente el IVA de la electricidad, gas y carburantes.",
+          "categoria": "Energía",
+          "estado": "rechazada",
+          "progreso": 5,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL rechazada", "fecha": "2024-05-15", "titulo": "PL para bajada permanente del IVA energético rechazada"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-05-15", "evento": "PL rechazada en pleno"}
+          ]
+        },
+        {
+          "id": "pp-007",
+          "titulo": "Derogar la Ley de Amnistía",
+          "descripcion": "Recurrir y derogar la Ley de Amnistía si llegan al gobierno.",
+          "categoria": "Política Territorial",
+          "estado": "en_tramite",
+          "progreso": 20,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "prensa", "referencia": "Recurso ante TC", "fecha": "2024-06-20", "titulo": "PP presenta recurso de inconstitucionalidad contra la Ley de Amnistía"}
+          ],
+          "timeline": [
+            {"fecha": "2024-06-11", "evento": "Ley de Amnistía publicada en BOE"},
+            {"fecha": "2024-06-20", "evento": "PP recurre ante el Tribunal Constitucional"},
+            {"fecha": "2025-06-01", "evento": "TC pendiente de resolver"}
+          ]
+        },
+        {
+          "id": "pp-008",
+          "titulo": "Apoyo a autónomos y PYMES",
+          "descripcion": "Reducción de cotizaciones, simplificación administrativa y moratoria de regulaciones para autónomos y PYMES.",
+          "categoria": "Economía",
+          "estado": "rechazada",
+          "progreso": 5,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL parcialmente debatida", "fecha": "2025-01-15", "titulo": "Propuestas legislativas sobre autónomos sin mayoría"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2025-01-15", "evento": "Sin avance legislativo por falta de mayoría"}
+          ]
+        }
+      ],
+      "keywords_programa": [
+        ["España", 195], ["libertad", 115], ["seguridad", 98], ["economía", 92],
+        ["empleo", 82], ["familia", 78], ["impuestos", 72], ["educación", 68],
+        ["sanidad", 62], ["defensa", 55], ["constitución", 52], ["unidad", 48],
+        ["PYME", 52], ["autónomos", 58], ["justicia", 45], ["orden", 42],
+        ["inmigración", 48], ["campo", 45], ["agua", 42], ["industria", 38],
+        ["energía", 45], ["vivienda", 35], ["digital", 28], ["Europa", 42],
+        ["cultura", 25], ["deporte", 22], ["rural", 40], ["natalidad", 35],
+        ["propiedad", 32], ["mérito", 28]
+      ],
+      "keywords_legislativo": [
+        ["inmigración", 18], ["seguridad", 15], ["impuestos", 12], ["amnistía", 22],
+        ["inconstitucionalidad", 15], ["IRPF", 8], ["justicia", 10],
+        ["autónomos", 6], ["PYME", 5], ["defensa", 8], ["agua", 6],
+        ["campo", 5], ["energía", 7], ["vivienda", 4], ["educación", 3],
+        ["sanidad", 4], ["familia", 5], ["orden", 3], ["constitución", 8],
+        ["fiscal", 10], ["España", 12], ["libertad", 6], ["propiedad", 3],
+        ["natalidad", 2], ["deporte", 1], ["rural", 3], ["unidad", 4],
+        ["empleo", 3], ["industria", 2], ["digital", 1]
+      ]
+    },
+    "VOX": {
+      "nombre": "VOX",
+      "siglas": "VOX",
+      "rol": "Oposición",
+      "color": "#63BE21",
+      "programa_url": "https://www.voxespana.es/programa-electoral",
+      "promesas": [
+        {
+          "id": "vox-001",
+          "titulo": "Cierre de fronteras a inmigración ilegal",
+          "descripcion": "Impermeabilizar las fronteras, deportación de inmigrantes ilegales y suspensión del espacio Schengen si es necesario.",
+          "categoria": "Inmigración",
+          "estado": "rechazada",
+          "progreso": 0,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Múltiples PL rechazadas", "fecha": "2024-06-01", "titulo": "Proposiciones sobre inmigración sistemáticamente rechazadas en pleno"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-06-01", "evento": "PL rechazada en pleno"},
+            {"fecha": "2025-03-01", "evento": "Nueva PL rechazada"}
+          ]
+        },
+        {
+          "id": "vox-002",
+          "titulo": "Derogar leyes de violencia de género",
+          "descripcion": "Sustituir la legislación de violencia de género por una ley de violencia intrafamiliar no discriminatoria por sexo.",
+          "categoria": "Igualdad",
+          "estado": "rechazada",
+          "progreso": 0,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL rechazada", "fecha": "2024-03-15", "titulo": "PL de violencia intrafamiliar rechazada"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-03-15", "evento": "Proposición rechazada en pleno"}
+          ]
+        },
+        {
+          "id": "vox-003",
+          "titulo": "Ilegalización de partidos separatistas",
+          "descripcion": "Aplicar la Ley de Partidos para ilegalizar formaciones que atenten contra la unidad territorial.",
+          "categoria": "Política Territorial",
+          "estado": "rechazada",
+          "progreso": 0,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL rechazada", "fecha": "2024-09-01", "titulo": "Proposición rechazada sin apoyo de PP"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-09-01", "evento": "Proposición rechazada sin apoyos suficientes"}
+          ]
+        },
+        {
+          "id": "vox-004",
+          "titulo": "Cadena perpetua revisable",
+          "descripcion": "Implantación de la prisión permanente revisable para un mayor número de delitos graves.",
+          "categoria": "Seguridad",
+          "estado": "rechazada",
+          "progreso": 0,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PL rechazada", "fecha": "2024-11-15", "titulo": "PL ampliación prisión permanente rechazada"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-11-15", "evento": "PL rechazada en pleno"}
+          ]
+        },
+        {
+          "id": "vox-005",
+          "titulo": "Supresión de las autonomías",
+          "descripcion": "Transformar el Estado autonómico en un Estado unitario centralizado.",
+          "categoria": "Política Territorial",
+          "estado": "rechazada",
+          "progreso": 0,
+          "prioridad": "alta",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "Reforma constitucional imposible", "fecha": "2024-01-01", "titulo": "Sin mayoría cualificada necesaria para reforma constitucional"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-01-01", "evento": "Inviable sin reforma constitucional (requiere 2/3)"}
+          ]
+        },
+        {
+          "id": "vox-006",
+          "titulo": "Eliminación de chiringuitos ideológicos",
+          "descripcion": "Supresión de subvenciones a organizaciones políticas, sindicales y patronales, y cierre de organismos redundantes.",
+          "categoria": "Economía",
+          "estado": "rechazada",
+          "progreso": 0,
+          "prioridad": "media",
+          "evidencias": [
+            {"tipo": "congreso", "referencia": "PNL rechazada", "fecha": "2024-04-01", "titulo": "Proposiciones de recorte de subvenciones rechazadas"}
+          ],
+          "timeline": [
+            {"fecha": "2023-07-23", "evento": "Promesa electoral"},
+            {"fecha": "2024-04-01", "evento": "PNL rechazada en comisión"}
+          ]
+        }
+      ],
+      "keywords_programa": [
+        ["España", 220], ["libertad", 95], ["seguridad", 88], ["fronteras", 82],
+        ["inmigración", 78], ["familia", 72], ["nación", 68], ["orden", 62],
+        ["soberanía", 58], ["constitución", 55], ["patria", 52], ["defensa", 48],
+        ["vida", 62], ["ilegal", 45], ["subvenciones", 42], ["impuestos", 55],
+        ["campo", 48], ["caza", 38], ["tradición", 35], ["unidad", 65],
+        ["ley", 52], ["propiedad", 32], ["mérito", 28], ["cristiano", 22],
+        ["educación", 25], ["sanidad", 22], ["autonomías", 35], ["chiringuito", 18],
+        ["ideología", 22], ["género", 42]
+      ],
+      "keywords_legislativo": [
+        ["inmigración", 25], ["ilegal", 18], ["fronteras", 15], ["deportación", 12],
+        ["violencia", 10], ["género", 12], ["familia", 8], ["seguridad", 10],
+        ["cadena perpetua", 6], ["separatismo", 8], ["ilegalización", 5],
+        ["amnistía", 15], ["inconstitucional", 10], ["subvenciones", 6],
+        ["impuestos", 5], ["autonomías", 4], ["soberanía", 3], ["defensa", 4],
+        ["campo", 3], ["caza", 4], ["toros", 3], ["tradición", 2],
+        ["natalidad", 2], ["vida", 3], ["propiedad", 2], ["orden", 3],
+        ["patria", 2], ["constitución", 5], ["educación", 1], ["mérito", 1]
+      ]
+    }
+  },
+  "patrimonio": [
+    {
+      "nombre": "Pedro Sánchez Pérez-Castejón",
+      "cargo": "Presidente del Gobierno",
+      "partido": "PSOE",
+      "grupo": "GS",
+      "antes": {
+        "año": 2018,
+        "total_estimado": 342000,
+        "descripcion": "Vivienda habitual en Pozuelo de Alarcón; sin otros inmuebles declarados.",
+        "fuente": "Declaración de bienes al acceder a la Presidencia (2018)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 483000,
+        "descripcion": "Misma vivienda habitual revalorizada; ahorros de sueldo presidencial.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 41.2,
+      "nota": "El incremento se debe principalmente a la revalorización inmobiliaria."
+    },
+    {
+      "nombre": "Alberto Núñez Feijóo",
+      "cargo": "Presidente del PP / Líder de la Oposición",
+      "partido": "PP",
+      "grupo": "GP",
+      "antes": {
+        "año": 2022,
+        "total_estimado": 815000,
+        "descripcion": "Propiedades en Galicia; ahorros de años como presidente de la Xunta.",
+        "fuente": "Declaración al dejar la Xunta y acceder al Congreso (2022)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 870000,
+        "descripcion": "Similar patrimonio inmobiliario; ingresos como diputado y líder del PP.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 6.7,
+      "nota": "Patrimonio estable, incremento por revalorización inmobiliaria."
+    },
+    {
+      "nombre": "Santiago Abascal Conde",
+      "cargo": "Presidente de VOX",
+      "partido": "VOX",
+      "grupo": "GVOX",
+      "antes": {
+        "año": 2019,
+        "total_estimado": 185000,
+        "descripcion": "Sin bienes inmuebles propios declarados; alquiler en Madrid.",
+        "fuente": "Declaración de bienes al acceder al Congreso (2019)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 295000,
+        "descripcion": "Adquisición de vivienda; ahorros de indemnizaciones y sueldo parlamentario.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 59.5,
+      "nota": "Mayor incremento porcentual, base baja; compra de primera vivienda."
+    },
+    {
+      "nombre": "Yolanda Díaz Pérez",
+      "cargo": "Vicepresidenta Segunda y Ministra de Trabajo",
+      "partido": "Sumar",
+      "grupo": "GSUMAR",
+      "antes": {
+        "año": 2020,
+        "total_estimado": 310000,
+        "descripcion": "Vivienda en A Coruña; jurista laboralista antes de la política.",
+        "fuente": "Declaración al acceder al Gobierno (2020)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 365000,
+        "descripcion": "Misma propiedad; ahorros ministeriales.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 17.7,
+      "nota": "Incremento moderado acorde con ingresos ministeriales."
+    },
+    {
+      "nombre": "Cuca Gamarra Ruiz-Clavijo",
+      "cargo": "Secretaria General del PP / Portavoz parlamentaria",
+      "partido": "PP",
+      "grupo": "GP",
+      "antes": {
+        "año": 2019,
+        "total_estimado": 420000,
+        "descripcion": "Propiedades en La Rioja; ex-alcaldesa de Logroño.",
+        "fuente": "Declaración de bienes al acceder al Congreso (2019)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 485000,
+        "descripcion": "Patrimonio actualizado con ingresos parlamentarios.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 15.5,
+      "nota": "Incremento normal acorde con puesto parlamentario."
+    },
+    {
+      "nombre": "Gabriel Rufián Romero",
+      "cargo": "Portavoz ERC en el Congreso",
+      "partido": "ERC",
+      "grupo": "GR",
+      "antes": {
+        "año": 2016,
+        "total_estimado": 45000,
+        "descripcion": "Sin propiedades; trabajaba como técnico informático antes de ser diputado.",
+        "fuente": "Declaración de bienes al acceder al Congreso (2016)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 280000,
+        "descripcion": "Adquisición de vivienda; ahorros de 8 años como diputado.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 522.2,
+      "nota": "Alto incremento porcentual por base muy baja; 8 años de sueldo parlamentario."
+    },
+    {
+      "nombre": "Iván Espinosa de los Monteros",
+      "cargo": "Portavoz adjunto de VOX",
+      "partido": "VOX",
+      "grupo": "GVOX",
+      "antes": {
+        "año": 2019,
+        "total_estimado": 2850000,
+        "descripcion": "Empresario; múltiples propiedades y participaciones societarias.",
+        "fuente": "Declaración de bienes al acceder al Congreso (2019)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 3100000,
+        "descripcion": "Patrimonio empresarial más ingresos parlamentarios.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 8.8,
+      "nota": "Patrimonio alto previo a la política; incremento moderado."
+    },
+    {
+      "nombre": "Patxi López Álvarez",
+      "cargo": "Presidente del Congreso (anterior) / Portavoz PSOE",
+      "partido": "PSOE",
+      "grupo": "GS",
+      "antes": {
+        "año": 2016,
+        "total_estimado": 520000,
+        "descripcion": "Ex-lehendakari; propiedades en País Vasco.",
+        "fuente": "Declaración de bienes al acceder al Congreso (2016)"
+      },
+      "despues": {
+        "año": 2024,
+        "total_estimado": 610000,
+        "descripcion": "Patrimonio incrementado por años de servicio parlamentario.",
+        "fuente": "Declaración de bienes y actividades (2024)"
+      },
+      "variacion_pct": 17.3,
+      "nota": "Incremento moderado; largo historial político."
+    }
+  ],
+  "contradicciones": [
+    {
+      "id": "cont-001",
+      "partido": "PSOE",
+      "titulo": "La amnistía inconstitucional",
+      "promesa": {
+        "texto": "Con carácter general, una amnistía no cabe en nuestro ordenamiento constitucional.",
+        "autor": "Pedro Sánchez",
+        "fecha": "2019-10-31",
+        "fuente": "Debate electoral RTVE, 4 de noviembre de 2019"
+      },
+      "realidad": {
+        "texto": "Ley Orgánica 1/2024, de 10 de junio, de amnistía para la normalización institucional, política y social en Cataluña.",
+        "referencia": "BOE-A-2024-11398",
+        "fecha": "2024-06-11",
+        "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2024-11398"
+      },
+      "contexto": "Tras las elecciones de julio 2023, el PSOE necesitó los votos de Junts (7) y ERC (7) para lograr la investidura. La amnistía fue condición exigida por las formaciones independentistas."
+    },
+    {
+      "id": "cont-002",
+      "partido": "PSOE",
+      "titulo": "No habrá indultos",
+      "promesa": {
+        "texto": "Va a haber una sentencia y se va a cumplir íntegramente.",
+        "autor": "Pedro Sánchez",
+        "fecha": "2019-06-05",
+        "fuente": "Entrevista en La Sexta Noche"
+      },
+      "realidad": {
+        "texto": "Nueve Reales Decretos de indulto a los condenados por el proceso independentista catalán.",
+        "referencia": "BOE-A-2021-10158 a BOE-A-2021-10166",
+        "fecha": "2021-06-22",
+        "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2021-10158"
+      },
+      "contexto": "El Tribunal Supremo condenó a los líderes del procés en octubre de 2019. En junio de 2021, el Gobierno concedió indultos parciales a los nueve condenados."
+    },
+    {
+      "id": "cont-003",
+      "partido": "PSOE",
+      "titulo": "No subiremos impuestos",
+      "promesa": {
+        "texto": "No vamos a subir los impuestos a las clases medias y trabajadoras.",
+        "autor": "Pedro Sánchez",
+        "fecha": "2023-07-10",
+        "fuente": "Debate electoral 23J"
+      },
+      "realidad": {
+        "texto": "Creación de nuevos impuestos: Impuesto Temporal de Solidaridad a Grandes Fortunas, gravamen banca y energéticas, nuevo tramo IRPF del ahorro al 28%, IBI de inmuebles vacíos.",
+        "referencia": "Ley 38/2022 y otros",
+        "fecha": "2023-12-28",
+        "url": ""
+      },
+      "contexto": "Aunque se centraron en rentas altas, la creación de nuevos impuestos y el incremento del tope del IRPF al ahorro afectaron a un segmento más amplio de contribuyentes."
+    },
+    {
+      "id": "cont-004",
+      "partido": "PP",
+      "titulo": "Nunca con VOX",
+      "promesa": {
+        "texto": "El PP no va a gobernar con VOX.",
+        "autor": "Pablo Casado",
+        "fecha": "2019-04-15",
+        "fuente": "Entrevista en TVE, campaña abril 2019"
+      },
+      "realidad": {
+        "texto": "Gobiernos de coalición PP-VOX en Castilla y León (2022), Comunidad Valenciana, Aragón, Baleares y Extremadura (2023).",
+        "referencia": "Acuerdos de coalición autonómicos",
+        "fecha": "2023-07-01",
+        "url": ""
+      },
+      "contexto": "Tras las elecciones autonómicas de mayo 2023, el PP pactó con VOX en cinco comunidades. VOX rompió esos pactos en julio 2024 por desacuerdos sobre inmigración."
+    },
+    {
+      "id": "cont-005",
+      "partido": "PP",
+      "titulo": "Bajaremos la factura de la luz",
+      "promesa": {
+        "texto": "Bajaremos el precio de la electricidad desde el primer día.",
+        "autor": "Alberto Núñez Feijóo",
+        "fecha": "2023-07-10",
+        "fuente": "Debate electoral 23J"
+      },
+      "realidad": {
+        "texto": "Al no gobernar, la promesa es invocada pero las PL de bajada del IVA energético presentadas por PP han sido rechazadas.",
+        "referencia": "PL rechazada en Congreso",
+        "fecha": "2024-05-15",
+        "url": ""
+      },
+      "contexto": "En la oposición, el PP ha presentado propuestas de rebaja fiscal energética que han sido rechazadas por la mayoría parlamentaria."
+    },
+    {
+      "id": "cont-006",
+      "partido": "VOX",
+      "titulo": "No participaremos en coaliciones",
+      "promesa": {
+        "texto": "VOX no será muleta de nadie. No entraremos en gobiernos de coalición.",
+        "autor": "Santiago Abascal",
+        "fecha": "2019-11-01",
+        "fuente": "Mitin de campaña noviembre 2019"
+      },
+      "realidad": {
+        "texto": "VOX entró en gobiernos de coalición con PP en 5 comunidades autónomas (2023). Los abandonó en julio de 2024.",
+        "referencia": "Acuerdos PP-VOX autonómicos",
+        "fecha": "2023-07-15",
+        "url": ""
+      },
+      "contexto": "VOX aceptó entrar en coaliciones autonómicas en 2023 tras pactar con el PP. Rompió los pactos un año después alegando desacuerdos sobre política migratoria."
+    },
+    {
+      "id": "cont-007",
+      "partido": "PSOE",
+      "titulo": "No pactaremos con Bildu",
+      "promesa": {
+        "texto": "No vamos a pactar con Bildu.",
+        "autor": "Pedro Sánchez",
+        "fecha": "2019-10-31",
+        "fuente": "Debate electoral noviembre 2019"
+      },
+      "realidad": {
+        "texto": "EH Bildu apoyó la investidura de Sánchez (2023) y múltiples votaciones parlamentarias clave durante la XV Legislatura.",
+        "referencia": "Acuerdos parlamentarios",
+        "fecha": "2023-11-16",
+        "url": ""
+      },
+      "contexto": "EH Bildu es uno de los socios parlamentarios del Gobierno de coalición, votando a favor de la investidura y de leyes clave como la Amnistía y los decretos del escudo social."
+    }
+  ],
+  "fuentes": [
+    {"nombre": "BOE - Boletín Oficial del Estado", "url": "https://www.boe.es", "tipo": "oficial"},
+    {"nombre": "Congreso de los Diputados - Datos Abiertos", "url": "https://www.congreso.es/es/datos-abiertos", "tipo": "oficial"},
+    {"nombre": "Portal de Transparencia", "url": "https://transparencia.gob.es", "tipo": "oficial"},
+    {"nombre": "CIS - Centro de Investigaciones Sociológicas", "url": "https://www.cis.es", "tipo": "oficial"},
+    {"nombre": "Ministerio del Interior - Resultados Electorales", "url": "https://resultados.elecciones.interior.gob.es", "tipo": "oficial"},
+    {"nombre": "Programa PSOE 23J", "url": "https://www.psoe.es/media-content/2023/07/Programa-Electoral-PSOE-23J.pdf", "tipo": "programa"},
+    {"nombre": "Declaraciones de bienes y actividades - Congreso", "url": "https://www.congreso.es/busqueda-de-diputados", "tipo": "oficial"}
+  ]
+}

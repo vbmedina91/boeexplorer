@@ -60,6 +60,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey@0.12.1/dist/chartjs-chart-sankey.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-wordcloud@4.4.3/build/index.umd.min.js"></script>
 <script>
 tailwind.config = {
   darkMode: "class",
@@ -143,8 +145,13 @@ body { font-family: 'Inter', sans-serif; }
         <button onclick="navigateTo('busqueda')" data-tab="busqueda" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Búsqueda Avanzada</button>
         <button onclick="navigateTo('referencias')" data-tab="referencias" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Ref. Cruzadas</button>
         <button onclick="navigateTo('subvenciones')" data-tab="subvenciones" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Subvenciones</button>
+        <button onclick="navigateTo('congreso')" data-tab="congreso" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Congreso</button>
+        <button onclick="navigateTo('promesas')" data-tab="promesas" class="nav-tab px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary rounded-lg transition-colors">Promesas</button>
       </div>
       <div class="flex items-center gap-3">
+        <a href="https://github.com/vbmedina91/boeexplorer" target="_blank" rel="noopener" class="p-2 rounded-lg bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Ver código en GitHub">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
         <button onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" id="theme-toggle">
           <span class="material-symbols-outlined" id="theme-icon">light_mode</span>
         </button>
@@ -173,6 +180,8 @@ body { font-family: 'Inter', sans-serif; }
       <button onclick="navigateTo('busqueda');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Búsqueda Avanzada</button>
       <button onclick="navigateTo('referencias');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Ref. Cruzadas</button>
       <button onclick="navigateTo('subvenciones');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Subvenciones</button>
+      <button onclick="navigateTo('congreso');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Congreso</button>
+      <button onclick="navigateTo('promesas');toggleMobileMenu()" class="text-left px-4 py-3 rounded-lg text-sm font-semibold hover:bg-primary/10 hover:text-primary">Promesas</button>
     </div>
   </div>
 </div>
@@ -184,7 +193,7 @@ body { font-family: 'Inter', sans-serif; }
 <!-- Footer -->
 <footer class="mt-12 border-t border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-12">
       <div class="col-span-1 md:col-span-2">
         <div class="flex items-center gap-2 mb-4">
           <div class="flex items-center justify-center bg-primary rounded p-1">
@@ -206,6 +215,14 @@ body { font-family: 'Inter', sans-serif; }
         </ul>
       </div>
       <div>
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-6">Proyecto</h4>
+        <ul class="space-y-4">
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors inline-flex items-center gap-1.5" href="https://github.com/vbmedina91/boeexplorer" target="_blank" rel="noopener"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>Código en GitHub</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://github.com/vbmedina91/boeexplorer/issues" target="_blank" rel="noopener">Reportar un problema</a></li>
+          <li><a class="text-sm text-slate-500 hover:text-primary transition-colors" href="https://github.com/vbmedina91/boeexplorer/blob/main/LICENSE" target="_blank" rel="noopener">Licencia MIT</a></li>
+        </ul>
+      </div>
+      <div>
         <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-6">Legal</h4>
         <ul class="space-y-4">
           <li><a class="text-sm text-slate-500 hover:text-primary transition-colors cursor-pointer" onclick="navigateTo('aviso-legal')">Aviso Legal</a></li>
@@ -224,7 +241,7 @@ body { font-family: 'Inter', sans-serif; }
       </div>
     </div>
     <div class="mt-12 pt-8 border-t border-slate-100 dark:border-border-dark flex flex-col md:flex-row justify-between items-center gap-4">
-      <p class="text-xs text-slate-500">© 2026 BOE Explorer. Proyecto de análisis de datos públicos.</p>
+      <p class="text-xs text-slate-500">© 2026 BOE Explorer. Proyecto open-source de análisis de datos públicos · <a href="https://github.com/vbmedina91/boeexplorer" target="_blank" rel="noopener" class="hover:text-primary transition-colors inline-inline-flex items-center gap-1">GitHub</a></p>
       <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-background-dark rounded-full border border-slate-200 dark:border-border-dark">
         <span class="size-2 bg-emerald-500 rounded-full pulse-dot"></span>
         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actualización diaria 20:00 • v3.0.0</span>
@@ -467,6 +484,8 @@ function navigateTo(page) {
     case 'busqueda': renderBusqueda(main); break;
     case 'referencias': renderReferencias(main); break;
     case 'subvenciones': renderSubvenciones(main); break;
+    case 'congreso': renderCongreso(main); break;
+    case 'promesas': renderPromesas(main); break;
     case 'aviso-legal': renderAvisoLegal(main); break;
     case 'privacidad': renderPrivacidad(main); break;
     case 'atribucion': renderAtribucion(main); break;
@@ -1347,6 +1366,7 @@ function clearLicFilters() {
 
 function renderLicitacionesTable(containerId, data) {
   const c = document.getElementById(containerId);
+  if (!c) return;
   if (!data || !data.licitaciones?.length) {
     c.innerHTML = '<div class="p-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">inbox</span><p>No se encontraron licitaciones</p></div>';
     return;
@@ -2313,7 +2333,7 @@ async function renderSubvenciones(container) {
     </div>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8" id="bdns-kpis">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 mb-8" id="bdns-kpis">
       <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
         <div class="flex items-center gap-2 mb-2">
           <div class="p-1.5 rounded-lg bg-emerald-500/10"><span class="material-symbols-outlined text-emerald-500 text-lg">volunteer_activism</span></div>
@@ -2322,13 +2342,21 @@ async function renderSubvenciones(container) {
         <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-total">—</div>
         <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate" id="bdns-range-info"></p>
       </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden col-span-2 lg:col-span-1">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="p-1.5 rounded-lg bg-green-600/10"><span class="material-symbols-outlined text-green-600 text-lg">euro</span></div>
+          <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Presupuesto Total</span>
+        </div>
+        <div class="text-base lg:text-2xl font-black text-green-600" id="bdns-total-euros">—</div>
+        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate" id="bdns-con-presupuesto"></p>
+      </div>
       <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
         <div class="flex items-center gap-2 mb-2">
           <div class="p-1.5 rounded-lg bg-primary/10"><span class="material-symbols-outlined text-primary text-lg">flag</span></div>
           <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Estatales</span>
         </div>
         <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-estatal">—</div>
-        <p class="text-[10px] lg:text-xs text-slate-500 mt-1">Gobierno central</p>
+        <p class="text-[10px] lg:text-xs text-green-600 font-semibold mt-1" id="bdns-estatal-euros"></p>
       </div>
       <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
         <div class="flex items-center gap-2 mb-2">
@@ -2336,7 +2364,7 @@ async function renderSubvenciones(container) {
           <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Autonómicas</span>
         </div>
         <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-autonomico">—</div>
-        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate">CC.AA.</p>
+        <p class="text-[10px] lg:text-xs text-green-600 font-semibold mt-1" id="bdns-autonomico-euros"></p>
       </div>
       <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
         <div class="flex items-center gap-2 mb-2">
@@ -2344,20 +2372,20 @@ async function renderSubvenciones(container) {
           <span class="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider leading-tight">Locales</span>
         </div>
         <div class="text-base lg:text-2xl font-black dark:text-white" id="bdns-local">—</div>
-        <p class="text-[10px] lg:text-xs text-slate-500 mt-1 truncate">Ayuntamientos</p>
+        <p class="text-[10px] lg:text-xs text-green-600 font-semibold mt-1" id="bdns-local-euros"></p>
       </div>
     </div>
 
     <!-- Charts Row 1: Sector + Nivel -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
-        <h3 class="font-bold dark:text-white mb-1">Subvenciones por Sector</h3>
-        <p class="text-xs text-slate-500 mb-4">Salud, educación, industria, medio ambiente...</p>
+        <h3 class="font-bold dark:text-white mb-1">Presupuesto por Sector</h3>
+        <p class="text-xs text-slate-500 mb-4">Euros asignados por área temática</p>
         <div class="chart-container" style="height:320px"><canvas id="chart-bdns-sector"></canvas></div>
       </div>
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
-        <h3 class="font-bold dark:text-white mb-1">Subvenciones por Nivel de Gobierno</h3>
-        <p class="text-xs text-slate-500 mb-4">Distribución estatal, autonómico y local</p>
+        <h3 class="font-bold dark:text-white mb-1">Presupuesto por Nivel de Gobierno</h3>
+        <p class="text-xs text-slate-500 mb-4">Euros: estatal, autonómico y local</p>
         <div class="chart-container" style="height:320px"><canvas id="chart-bdns-nivel"></canvas></div>
       </div>
     </div>
@@ -2365,8 +2393,8 @@ async function renderSubvenciones(container) {
     <!-- Charts Row 2: Destino General + Destinos Internacionales -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
-        <h3 class="font-bold dark:text-white mb-1">Destino de las Subvenciones</h3>
-        <p class="text-xs text-slate-500 mb-4">Distribución general: España vs Internacional</p>
+        <h3 class="font-bold dark:text-white mb-1">Presupuesto por Destino</h3>
+        <p class="text-xs text-slate-500 mb-4">Euros asignados: España vs Internacional</p>
         <div class="chart-container" style="height:360px"><canvas id="chart-bdns-destino"></canvas></div>
       </div>
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
@@ -2401,22 +2429,27 @@ async function renderSubvenciones(container) {
     <!-- Charts Row 3: Departamento -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
-        <h3 class="font-bold dark:text-white mb-1">Top Departamentos / Organismos</h3>
-        <p class="text-xs text-slate-500 mb-4">Entidades que más subvenciones convocan</p>
+        <h3 class="font-bold dark:text-white mb-1">Top Organismos por Presupuesto</h3>
+        <p class="text-xs text-slate-500 mb-4">Entidades con mayor dotación presupuestaria</p>
         <div class="chart-container" style="height:360px"><canvas id="chart-bdns-organo"></canvas></div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <h3 class="font-bold dark:text-white mb-1">Evolución Mensual del Presupuesto</h3>
+        <p class="text-xs text-slate-500 mb-4">Euros convocados por mes</p>
+        <div class="chart-container" style="height:360px"><canvas id="chart-bdns-euros-mes"></canvas></div>
       </div>
     </div>
 
     <!-- Charts Row 4: Timeline + Entidades -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
-        <h3 class="font-bold dark:text-white mb-1">Evolución Mensual</h3>
-        <p class="text-xs text-slate-500 mb-4">Número de convocatorias por mes</p>
+        <h3 class="font-bold dark:text-white mb-1">Convocatorias por Mes</h3>
+        <p class="text-xs text-slate-500 mb-4">Número de convocatorias publicadas por mes</p>
         <div class="chart-container" style="height:280px"><canvas id="chart-bdns-timeline"></canvas></div>
       </div>
       <div class="p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
-        <h3 class="font-bold dark:text-white mb-1">Entidades con más convocatorias</h3>
-        <p class="text-xs text-slate-500 mb-4">Comunidades Autónomas, ministerios y municipios</p>
+        <h3 class="font-bold dark:text-white mb-1">Top Entidades por Presupuesto</h3>
+        <p class="text-xs text-slate-500 mb-4">CC.AA., ministerios y municipios con mayor dotación</p>
         <div class="chart-container" style="height:280px"><canvas id="chart-bdns-entidad"></canvas></div>
       </div>
     </div>
@@ -2489,20 +2522,29 @@ async function renderSubvenciones(container) {
 function renderBDNSCharts(data) {
   if (!data) return;
   const c = chartColors();
+  const fmtEur = n => { if (!n) return ''; if (n >= 1e9) return (n/1e9).toFixed(1) + ' B€'; if (n >= 1e6) return (n/1e6).toFixed(1) + ' M€'; if (n >= 1e3) return (n/1e3).toFixed(0) + ' k€'; return n.toLocaleString('es-ES') + ' €'; };
 
   // KPIs
   document.getElementById('bdns-total').textContent = formatNumber(data.total_convocatorias);
   document.getElementById('bdns-range-info').textContent =
     data.fecha_min && data.fecha_max ? `${data.fecha_min} → ${data.fecha_max}` : 'Sin datos';
-  document.getElementById('bdns-estatal').textContent = formatNumber(data.por_nivel?.ESTATAL || 0);
-  document.getElementById('bdns-autonomico').textContent = formatNumber(data.por_nivel?.AUTONOMICO || 0);
+  document.getElementById('bdns-total-euros').textContent = fmtEur(data.total_presupuesto);
+  const conPres = document.getElementById('bdns-con-presupuesto');
+  if (conPres) conPres.textContent = data.con_presupuesto ? `${formatNumber(data.con_presupuesto)} con datos (${(data.con_presupuesto / data.total_convocatorias * 100).toFixed(0)}%)` : '';
+  document.getElementById('bdns-estatal').textContent = formatNumber(data.por_nivel?.ESTATAL || data.por_nivel?.ESTADO || 0);
+  document.getElementById('bdns-estatal-euros').textContent = fmtEur(data.euros_estatal);
+  document.getElementById('bdns-autonomico').textContent = formatNumber(data.por_nivel?.AUTONOMICO || data.por_nivel?.AUTONOMICA || 0);
+  document.getElementById('bdns-autonomico-euros').textContent = fmtEur(data.euros_autonomico);
   document.getElementById('bdns-local').textContent = formatNumber(data.por_nivel?.LOCAL || 0);
+  document.getElementById('bdns-local-euros').textContent = fmtEur(data.euros_local);
 
   const palette = ['#1978e5','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#a855f7','#0ea5e9','#d946ef'];
 
-  // Sector chart (doughnut) — clickable
-  if (data.por_sector) {
-    const entries = Object.entries(data.por_sector).slice(0, 14);
+  // Sector chart (doughnut) — shows euros, clickable
+  if (data.euros_por_sector) {
+    const entries = Object.entries(data.euros_por_sector).sort((a,b) => b[1] - a[1]).slice(0, 14);
+    const countEntries = Object.entries(data.por_sector || {});
+    const countMap = Object.fromEntries(countEntries);
     if (chartInstances.bdnsSector) chartInstances.bdnsSector.destroy();
     chartInstances.bdnsSector = new Chart(document.getElementById('chart-bdns-sector'), {
       type: 'doughnut',
@@ -2515,17 +2557,19 @@ function renderBDNSCharts(data) {
         onClick: (evt, elements) => { if (elements.length) showChartDetalle('sector', entries[elements[0].index][0]); },
         plugins: {
           legend: { position: 'right', labels: { color: c.text, font: { size: 10 }, boxWidth: 12 } },
-          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} (${(ctx.raw / data.total_convocatorias * 100).toFixed(1)}%)`, afterLabel: () => '(clic para ver detalle)' } }
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmtEur(ctx.raw)} (${countMap[ctx.label] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } }
         }
       }
     });
   }
 
-  // Nivel chart (pie) — clickable, fixed labels
-  if (data.por_nivel) {
-    const entries = Object.entries(data.por_nivel);
-    const nivelNames = { ESTADO: 'Estatal', ESTATAL: 'Estatal', AUTONOMICA: 'Autonómico', AUTONOMICO: 'Autonómico', LOCAL: 'Local', OTROS: 'Otros' };
-    const nivelColors = { ESTADO: '#1978e5', ESTATAL: '#1978e5', AUTONOMICA: '#f59e0b', AUTONOMICO: '#f59e0b', LOCAL: '#10b981', OTROS: '#94a3b8' };
+  // Nivel chart (pie) — shows euros, clickable
+  if (data.euros_por_nivel) {
+    const entries = Object.entries(data.euros_por_nivel).sort((a,b) => b[1] - a[1]);
+    const countEntries = Object.entries(data.por_nivel || {});
+    const countMap = Object.fromEntries(countEntries);
+    const nivelNames = { ESTADO: 'Estatal', ESTATAL: 'Estatal', AUTONOMICA: 'Autonómico', AUTONOMICO: 'Autonómico', LOCAL: 'Local', OTROS: 'Otros', 'Sin especificar': 'Sin especificar' };
+    const nivelColors = { ESTADO: '#1978e5', ESTATAL: '#1978e5', AUTONOMICA: '#f59e0b', AUTONOMICO: '#f59e0b', LOCAL: '#10b981', OTROS: '#94a3b8', 'Sin especificar': '#64748b' };
     if (chartInstances.bdnsNivel) chartInstances.bdnsNivel.destroy();
     chartInstances.bdnsNivel = new Chart(document.getElementById('chart-bdns-nivel'), {
       type: 'pie',
@@ -2538,44 +2582,46 @@ function renderBDNSCharts(data) {
         onClick: (evt, elements) => { if (elements.length) showChartDetalle('nivel', entries[elements[0].index][0]); },
         plugins: {
           legend: { position: 'bottom', labels: { color: c.text, font: { size: 11 } } },
-          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} (${(ctx.raw / data.total_convocatorias * 100).toFixed(1)}%)`, afterLabel: () => '(clic para ver detalle)' } }
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } }
         }
       }
     });
   }
 
-  // Destino chart (horizontal bar) — clickable
-  if (data.por_destino) {
-    const entries = Object.entries(data.por_destino).slice(0, 15);
+  // Destino chart (horizontal bar) — shows euros, clickable
+  if (data.euros_por_destino) {
+    const entries = Object.entries(data.euros_por_destino).sort((a,b) => b[1] - a[1]).slice(0, 15);
+    const countMap = data.por_destino || {};
     if (chartInstances.bdnsDestino) chartInstances.bdnsDestino.destroy();
     chartInstances.bdnsDestino = new Chart(document.getElementById('chart-bdns-destino'), {
       type: 'bar',
       data: {
         labels: entries.map(e => truncate(e[0], 30)),
-        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: palette, borderRadius: 4 }]
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: palette, borderRadius: 4 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         onClick: (evt, elements) => { if (elements.length) showChartDetalle('destino', entries[elements[0].index][0]); },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } } },
         scales: {
-          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text, callback: v => fmtEur(v) }, grid: { color: c.grid } },
           y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
         }
       }
     });
   }
 
-  // International destinations chart (horizontal bar - only non-España entries)
-  if (data.por_destino_intl) {
-    const entries = Object.entries(data.por_destino_intl).sort((a,b) => b[1] - a[1]).slice(0, 20);
+  // International destinations chart (horizontal bar - euros)
+  if (data.euros_por_destino_intl) {
+    const entries = Object.entries(data.euros_por_destino_intl).sort((a,b) => b[1] - a[1]).slice(0, 20);
+    const countMap = data.por_destino_intl || {};
     const intlPalette = ['#ef4444','#f97316','#eab308','#22c55e','#14b8a6','#0ea5e9','#6366f1','#a855f7','#ec4899','#f43f5e','#fb923c','#facc15','#4ade80','#2dd4bf','#38bdf8','#818cf8','#c084fc','#f472b6','#fb7185','#fbbf24'];
     if (chartInstances.bdnsDestinoIntl) chartInstances.bdnsDestinoIntl.destroy();
     chartInstances.bdnsDestinoIntl = new Chart(document.getElementById('chart-bdns-destino-intl'), {
       type: 'bar',
       data: {
         labels: entries.map(e => e[0]),
-        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: intlPalette, borderRadius: 4 }]
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: intlPalette, borderRadius: 4 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
@@ -2586,32 +2632,55 @@ function renderBDNSCharts(data) {
             showDestinoIntlDetalle(destName);
           }
         },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } } },
         scales: {
-          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text, callback: v => fmtEur(v) }, grid: { color: c.grid } },
           y: { ticks: { color: c.text, font: { size: 10 }, cursor: 'pointer' }, grid: { display: false } }
         }
       }
     });
   }
 
-  // Organo chart (horizontal bar) — clickable
-  if (data.por_organo) {
-    const entries = Object.entries(data.por_organo).slice(0, 12);
+  // Organo chart (horizontal bar) — shows euros, clickable
+  if (data.euros_por_organo) {
+    const entries = Object.entries(data.euros_por_organo).sort((a,b) => b[1] - a[1]).slice(0, 12);
+    const countMap = data.por_organo || {};
     if (chartInstances.bdnsOrgano) chartInstances.bdnsOrgano.destroy();
     chartInstances.bdnsOrgano = new Chart(document.getElementById('chart-bdns-organo'), {
       type: 'bar',
       data: {
         labels: entries.map(e => truncate(e[0], 35)),
-        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: '#1978e5', borderRadius: 4 }]
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: '#1978e5', borderRadius: 4 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         onClick: (evt, elements) => { if (elements.length) showChartDetalle('organo', entries[elements[0].index][0]); },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } } },
         scales: {
-          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text, callback: v => fmtEur(v) }, grid: { color: c.grid } },
           y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Euros by month chart (bar)
+  if (data.euros_por_mes) {
+    const entries = Object.entries(data.euros_por_mes);
+    const meses = { '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic' };
+    if (chartInstances.bdnsEurosMes) chartInstances.bdnsEurosMes.destroy();
+    chartInstances.bdnsEurosMes = new Chart(document.getElementById('chart-bdns-euros-mes'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(e => { const [y, m] = e[0].split('-'); return (meses[m] || m) + ' ' + y; }),
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: '#10b981', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtEur(ctx.raw) } } },
+        scales: {
+          x: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: c.text, callback: v => fmtEur(v) }, grid: { color: c.grid } }
         }
       }
     });
@@ -2640,22 +2709,23 @@ function renderBDNSCharts(data) {
     });
   }
 
-  // Entidad chart (horizontal bar) — clickable
-  if (data.por_entidad) {
-    const entries = Object.entries(data.por_entidad).slice(0, 12);
+  // Entidad chart (horizontal bar) — euros, clickable
+  if (data.euros_por_entidad) {
+    const entries = Object.entries(data.euros_por_entidad).sort((a,b) => b[1] - a[1]).slice(0, 12);
+    const countMap = data.por_entidad || {};
     if (chartInstances.bdnsEntidad) chartInstances.bdnsEntidad.destroy();
     chartInstances.bdnsEntidad = new Chart(document.getElementById('chart-bdns-entidad'), {
       type: 'bar',
       data: {
         labels: entries.map(e => truncate(e[0], 28)),
-        datasets: [{ label: 'Convocatorias', data: entries.map(e => e[1]), backgroundColor: '#8b5cf6', borderRadius: 4 }]
+        datasets: [{ label: 'Presupuesto (€)', data: entries.map(e => e[1]), backgroundColor: '#8b5cf6', borderRadius: 4 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         onClick: (evt, elements) => { if (elements.length) showChartDetalle('entidad', entries[elements[0].index][0]); },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: () => '(clic para ver detalle)' } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${fmtEur(ctx.raw)} (${countMap[entries[ctx.dataIndex][0]] || 0} conv.)`, afterLabel: () => '(clic para ver detalle)' } } },
         scales: {
-          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text, callback: v => fmtEur(v) }, grid: { color: c.grid } },
           y: { ticks: { color: c.text, font: { size: 9 } }, grid: { display: false } }
         }
       }
@@ -2795,6 +2865,7 @@ function renderSubvencionesTable(containerId, data) {
               <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Fecha</th>
               <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Nivel</th>
               <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500" style="min-width:320px">Descripción</th>
+              <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500 text-right">Presupuesto</th>
               <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500" style="min-width:180px">Órgano</th>
               <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Sector</th>
               <th class="px-3 py-3 text-xs font-bold uppercase tracking-widest text-slate-500">Destino</th>
@@ -2809,6 +2880,7 @@ function renderSubvencionesTable(containerId, data) {
                 <td class="px-3 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase ${nivelBg}">${nivelLabel}</span>
                   ${s.mrr ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-500 ml-1">MRR</span>' : ''}</td>
                 <td class="px-3 py-3"><span class="text-sm dark:text-white block" title="${s.descripcion}">${truncate(s.descripcion, 90)}</span></td>
+                <td class="px-3 py-3 text-right"><span class="text-sm font-semibold ${s.presupuesto > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">${s.presupuesto > 0 ? new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(s.presupuesto) : '—'}</span></td>
                 <td class="px-3 py-3"><span class="text-xs text-slate-600 dark:text-slate-400 block" title="${s.organo || ''}">${truncate(s.organo || '—', 30)}</span></td>
                 <td class="px-3 py-3"><span class="text-xs font-semibold text-slate-600 dark:text-slate-400">${s.sector || '—'}</span></td>
                 <td class="px-3 py-3"><span class="text-xs text-slate-500">${truncate(s.destino || '—', 22)}</span></td>
@@ -2830,6 +2902,1145 @@ function renderSubvencionesTable(containerId, data) {
       </div>
     </div>
   `;
+}
+
+// ─── PAGE: CONGRESO ──────────────────────────────────────────
+
+async function loadCongreso() {
+  return await api('congreso');
+}
+
+async function renderCongreso(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Congreso de los Diputados</h2>
+      <p class="text-sm text-slate-500">Análisis de votaciones parlamentarias, fidelidad de voto y correlación entre inversión pública y resultados electorales. Datos del <a href="https://www.congreso.es/es/datos-abiertos" target="_blank" class="text-primary hover:underline">portal de datos abiertos del Congreso</a> y el Ministerio del Interior.</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8" id="congreso-kpis">
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-primary text-xl">groups</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Diputados</span></div>
+        <div class="text-2xl font-black text-slate-900 dark:text-white" id="congreso-diputados">—</div>
+        <div class="text-xs text-slate-500 mt-1">XV Legislatura (2023–)</div>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-amber-500 text-xl">how_to_vote</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Votaciones</span></div>
+        <div class="text-2xl font-black text-slate-900 dark:text-white" id="congreso-votaciones">—</div>
+        <div class="text-xs text-slate-500 mt-1" id="congreso-sesiones">— sesiones plenarias</div>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-emerald-500 text-xl">trending_up</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Participación 23J</span></div>
+        <div class="text-2xl font-black text-slate-900 dark:text-white">70,4%</div>
+        <div class="text-xs text-emerald-500 mt-1">+4,2pp vs Nov 2019</div>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-purple-500 text-xl">diversity_3</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Grupos Parl.</span></div>
+        <div class="text-2xl font-black text-slate-900 dark:text-white">9</div>
+        <div class="text-xs text-slate-500 mt-1">Incl. Grupo Mixto</div>
+      </div>
+    </div>
+
+    <!-- Buscador de Diputados -->
+    <div class="mb-8">
+      <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg text-primary">person_search</span>Buscador de Diputados
+        </h3>
+        <div class="flex flex-col sm:flex-row gap-3 mb-3">
+          <div class="flex-1 relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+            <input type="text" id="congreso-search-input" placeholder="Buscar por nombre, partido o grupo..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all">
+          </div>
+          <select id="congreso-search-grupo" class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none min-w-[180px]">
+            <option value="">Todos los grupos</option>
+          </select>
+          <select id="congreso-search-sort" class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none min-w-[160px]">
+            <option value="nombre">Nombre A-Z</option>
+            <option value="asistencia-asc">Menos asistencia ↑</option>
+            <option value="asistencia-desc">Más asistencia ↓</option>
+            <option value="votos-desc">Más votaciones ↓</option>
+          </select>
+        </div>
+        <div id="congreso-search-stats" class="text-xs text-slate-400 mb-2 hidden"></div>
+        <div id="congreso-search-results" class="hidden max-h-[500px] overflow-auto rounded-xl border border-slate-100 dark:border-border-dark"></div>
+      </div>
+    </div>
+
+    <!-- Section 1: Vote Transfer Sankey -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Fidelidad de Voto: Transferencias Nov 2019 → Jul 2023</h3>
+      <p class="text-xs text-slate-500 mb-4">Estimación basada en el Estudio CIS 3431 Post-electoral y análisis de Electomanía, El País y elDiario.es. Los flujos son aproximaciones — el voto es secreto.</p>
+      <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4" style="height:480px">
+        <canvas id="chart-congreso-sankey"></canvas>
+      </div>
+    </div>
+
+    <!-- Section 2: Escaños Evolution -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+      <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white mb-3">Evolución de Escaños</h3>
+        <div style="height:340px"><canvas id="chart-congreso-escanos"></canvas></div>
+      </div>
+      <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white mb-3">Asistencia por Grupo Parlamentario</h3>
+        <div style="height:340px"><canvas id="chart-congreso-asistencia-grupo"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Section 3: Muro de la Vergüenza / Honor -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Muro de la Vergüenza / Honor</h3>
+      <p class="text-xs text-slate-500 mb-4">Asistencia a las votaciones del Pleno — XV Legislatura. Basado en los registros oficiales de votación del Congreso.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <!-- Vergüenza -->
+        <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+          <div class="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-100 dark:border-red-900/30">
+            <h4 class="text-sm font-bold text-red-700 dark:text-red-400 flex items-center gap-2"><span class="material-symbols-outlined text-lg">trending_down</span>Muro de la Vergüenza — Peor Asistencia</h4>
+          </div>
+          <div class="p-0" id="congreso-verguenza">
+            <div class="p-8 text-center text-slate-400"><span class="material-symbols-outlined animate-spin text-2xl">sync</span><p class="text-xs mt-2">Cargando datos del Congreso...</p></div>
+          </div>
+        </div>
+        <!-- Honor -->
+        <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+          <div class="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-100 dark:border-emerald-900/30">
+            <h4 class="text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2"><span class="material-symbols-outlined text-lg">trending_up</span>Muro del Honor — Mejor Asistencia</h4>
+          </div>
+          <div class="p-0" id="congreso-honor">
+            <div class="p-8 text-center text-slate-400"><span class="material-symbols-outlined animate-spin text-2xl">sync</span><p class="text-xs mt-2">Cargando datos del Congreso...</p></div>
+          </div>
+        </div>
+      </div>
+      <!-- Full Table -->
+      <details class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+        <summary class="px-4 py-3 cursor-pointer text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg">table_chart</span>Ver tabla completa de todos los diputados
+        </summary>
+        <div id="congreso-tabla-completa" class="max-h-[600px] overflow-auto"></div>
+      </details>
+    </div>
+
+    <!-- Section 4: Correlación Dinero/Votos -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Correlación: Inversión Pública vs. Voto</h3>
+      <p class="text-xs text-slate-500 mb-4">Relación entre la inversión pública per cápita (licitaciones BOE) y el resultado electoral por CCAA en las elecciones de julio 2023. ¿Influye el gasto público en el voto?</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+          <h4 class="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">Inversión per cápita vs. % Voto PSOE (Gobierno)</h4>
+          <div style="height:360px"><canvas id="chart-congreso-corr-psoe"></canvas></div>
+        </div>
+        <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+          <h4 class="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">Inversión per cápita vs. % Voto PP (Oposición)</h4>
+          <div style="height:360px"><canvas id="chart-congreso-corr-pp"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source attribution -->
+    <div class="text-center text-xs text-slate-400 mt-6 pb-4">
+      <p>Fuentes: <a href="https://www.congreso.es/es/datos-abiertos" target="_blank" class="hover:underline">Congreso de los Diputados (datos abiertos)</a> · <a href="https://resultados.elecciones.interior.gob.es/" target="_blank" class="hover:underline">Ministerio del Interior</a> · <a href="https://www.cis.es/detalle-ficha-estudio?idEstudio=14794" target="_blank" class="hover:underline">CIS Estudio 3431</a></p>
+    </div>
+  `;
+
+  // Load data
+  const data = await loadCongreso();
+  if (!data) return;
+
+  renderCongresoData(data);
+  initCongresoSearch(data);
+}
+
+function renderCongresoData(data) {
+  const isDark = document.documentElement.classList.contains('dark');
+  const c = { text: isDark ? '#94a3b8' : '#64748b', grid: isDark ? '#1e293b' : '#e2e8f0', white: isDark ? '#f8fafc' : '#0f172a' };
+  const colores = data.colores || {};
+
+  // KPIs
+  const el = id => document.getElementById(id);
+  if (el('congreso-diputados')) el('congreso-diputados').textContent = (data.diputados_count || 350).toLocaleString('es-ES');
+  if (el('congreso-votaciones')) el('congreso-votaciones').textContent = (data.asistencia?.total_votaciones || 0).toLocaleString('es-ES');
+  if (el('congreso-sesiones')) el('congreso-sesiones').textContent = `${data.asistencia?.sesiones || 0} sesiones plenarias`;
+
+  // ─── Sankey: Vote Transfers ───
+  renderCongresoSankey(data, c, colores);
+
+  // ─── Escaños Evolution ───
+  renderCongresoEscanos(data, c, colores);
+
+  // ─── Attendance by Group ───
+  renderCongresoAsistenciaGrupo(data, c, colores);
+
+  // ─── Muro Vergüenza / Honor ───
+  renderCongresoMuro(data, colores);
+
+  // ─── Correlation Charts ───
+  renderCongresoCorrelacion(data, c);
+}
+
+function renderCongresoSankey(data, c, colores) {
+  const canvas = document.getElementById('chart-congreso-sankey');
+  if (!canvas || !data.transferencias?.flujos) return;
+
+  const flujos = data.transferencias.flujos;
+  const sankeyData = flujos.map(f => ({
+    from: f.from + ' \'19',
+    to: f.to + ' \'23',
+    flow: f.votos
+  }));
+
+  const getColor = (label) => {
+    const party = label.replace(/ '(19|23)$/, '');
+    return colores[party] || '#999999';
+  };
+
+  if (chartInstances.congresoSankey) chartInstances.congresoSankey.destroy();
+  chartInstances.congresoSankey = new Chart(canvas, {
+    type: 'sankey',
+    data: {
+      datasets: [{
+        label: 'Transferencia de votos',
+        data: sankeyData,
+        colorFrom: (ctx) => getColor(ctx.dataset.data[ctx.dataIndex].from),
+        colorTo: (ctx) => getColor(ctx.dataset.data[ctx.dataIndex].to),
+        colorMode: 'gradient',
+        size: 'max',
+        labels: (() => {
+          const l = {};
+          flujos.forEach(f => {
+            l[f.from + " '19"] = f.from;
+            l[f.to + " '23"] = f.to;
+          });
+          return l;
+        })(),
+        priority: (() => {
+          const order = ['PSOE', 'PP', 'VOX', 'UP', 'Cs', 'ERC', 'Nuevos/Abs.'];
+          const p = {};
+          order.forEach((party, i) => { p[party + " '19"] = i; });
+          const order2 = ['PP', 'PSOE', 'VOX', 'Sumar', 'ERC', 'JxCAT', 'Abstención', 'Otros'];
+          order2.forEach((party, i) => { p[party + " '23"] = i; });
+          return p;
+        })(),
+        borderWidth: 0,
+        nodeWidth: 15,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = ctx.dataset.data[ctx.dataIndex];
+              const from = d.from.replace(/ '19$/, '');
+              const to = d.to.replace(/ '23$/, '');
+              return `${from} → ${to}: ${(d.flow / 1000000).toFixed(1)}M votos`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderCongresoEscanos(data, c, colores) {
+  const canvas = document.getElementById('chart-congreso-escanos');
+  if (!canvas || !data.elecciones) return;
+
+  // Compare 2019-11 vs 2023-07
+  const e2019 = data.elecciones['2019-11']?.escanos || {};
+  const e2023 = data.elecciones['2023-07']?.escanos || {};
+
+  // Get all parties, sorted by 2023 seats
+  const allParties = new Set([...Object.keys(e2019), ...Object.keys(e2023)]);
+  const parties = [...allParties].sort((a, b) => (e2023[b] || 0) - (e2023[a] || 0)).slice(0, 10);
+
+  if (chartInstances.congresoEscanos) chartInstances.congresoEscanos.destroy();
+  chartInstances.congresoEscanos = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: parties,
+      datasets: [
+        {
+          label: 'Nov 2019',
+          data: parties.map(p => e2019[p] || 0),
+          backgroundColor: parties.map(p => (colores[p] || '#999') + '80'),
+          borderColor: parties.map(p => colores[p] || '#999'),
+          borderWidth: 2,
+          borderRadius: 4,
+        },
+        {
+          label: 'Jul 2023',
+          data: parties.map(p => e2023[p] || 0),
+          backgroundColor: parties.map(p => colores[p] || '#999'),
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: c.text, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            afterLabel: (ctx) => {
+              const party = parties[ctx.dataIndex];
+              const v19 = e2019[party] || 0;
+              const v23 = e2023[party] || 0;
+              const diff = v23 - v19;
+              return diff > 0 ? `+${diff} escaños` : diff < 0 ? `${diff} escaños` : 'Sin cambio';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: c.text, font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: c.text }, grid: { color: c.grid }, title: { display: true, text: 'Escaños', color: c.text } }
+      }
+    }
+  });
+}
+
+function renderCongresoAsistenciaGrupo(data, c, colores) {
+  const canvas = document.getElementById('chart-congreso-asistencia-grupo');
+  if (!canvas || !data.asistencia?.por_grupo) return;
+
+  const grupos = data.grupos || {};
+  const porGrupo = data.asistencia.por_grupo;
+  const entries = Object.entries(porGrupo).sort((a, b) => b[1].porcentaje - a[1].porcentaje);
+
+  const getGrupoColor = (code) => {
+    if (grupos[code]) return colores[grupos[code].partido] || '#999';
+    return '#999';
+  };
+
+  if (chartInstances.congresoAsistGrupo) chartInstances.congresoAsistGrupo.destroy();
+  chartInstances.congresoAsistGrupo = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: entries.map(([code]) => grupos[code]?.partido || code),
+      datasets: [{
+        label: 'Asistencia %',
+        data: entries.map(([, d]) => d.porcentaje),
+        backgroundColor: entries.map(([code]) => getGrupoColor(code)),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const [code, d] = entries[ctx.dataIndex];
+              return `${d.porcentaje}% asistencia (${d.presente.toLocaleString('es-ES')} de ${d.total.toLocaleString('es-ES')} votos)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { min: 0, max: 100, ticks: { color: c.text, callback: v => v + '%' }, grid: { color: c.grid } },
+        y: { ticks: { color: c.text, font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderCongresoMuro(data, colores) {
+  const grupos = data.grupos || {};
+
+  const getGrupoInfo = (code) => {
+    const g = grupos[code];
+    return g ? { nombre: g.partido, color: colores[g.partido] || '#999' } : { nombre: code, color: '#999' };
+  };
+
+  const makeRow = (d, rank) => {
+    const g = getGrupoInfo(d.grupo);
+    const pct = d.porcentaje_asistencia;
+    const barColor = pct < 70 ? '#ef4444' : pct < 85 ? '#f59e0b' : pct < 95 ? '#3b82f6' : '#10b981';
+    return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+      <td class="px-3 py-2 text-xs font-bold text-slate-400 text-center">${rank}</td>
+      <td class="px-3 py-2">
+        <span class="text-sm font-semibold text-slate-800 dark:text-white">${d.nombre}</span>
+      </td>
+      <td class="px-3 py-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase" style="background:${g.color}20;color:${g.color}">${g.nombre}</span>
+      </td>
+      <td class="px-3 py-2 text-right">
+        <div class="flex items-center gap-2 justify-end">
+          <div class="w-20 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div class="h-full rounded-full" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+          <span class="text-sm font-bold" style="color:${barColor}">${pct}%</span>
+        </div>
+      </td>
+      <td class="px-3 py-2 text-right text-xs text-slate-500">${d.presente}/${d.total}</td>
+    </tr>`;
+  };
+
+  const tableHead = `<table class="w-full text-left"><thead><tr class="bg-slate-50 dark:bg-background-dark/50">
+    <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-10">#</th>
+    <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Diputado/a</th>
+    <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Grupo</th>
+    <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right w-40">Asistencia</th>
+    <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right w-20">Votos</th>
+  </tr></thead><tbody>`;
+
+  // Vergüenza (worst)
+  const peores = data.asistencia?.peores || [];
+  const vergDiv = document.getElementById('congreso-verguenza');
+  if (vergDiv) {
+    if (peores.length === 0) {
+      vergDiv.innerHTML = '<div class="p-6 text-center text-sm text-slate-400">Descargando datos de votaciones del Congreso... Los datos aparecerán cuando se complete la descarga inicial.</div>';
+    } else {
+      vergDiv.innerHTML = `<div class="overflow-x-auto">${tableHead}${peores.slice(0, 15).map((d, i) => makeRow(d, i + 1)).join('')}</tbody></table></div>`;
+    }
+  }
+
+  // Honor (best)
+  const mejores = data.asistencia?.mejores || [];
+  const honorDiv = document.getElementById('congreso-honor');
+  if (honorDiv) {
+    if (mejores.length === 0) {
+      honorDiv.innerHTML = '<div class="p-6 text-center text-sm text-slate-400">Descargando datos de votaciones del Congreso... Los datos aparecerán cuando se complete la descarga inicial.</div>';
+    } else {
+      honorDiv.innerHTML = `<div class="overflow-x-auto">${tableHead}${mejores.slice(0, 15).map((d, i) => makeRow(d, i + 1)).join('')}</tbody></table></div>`;
+    }
+  }
+
+  // Full table
+  const allDiputados = data.asistencia?.todos || [];
+  const fullDiv = document.getElementById('congreso-tabla-completa');
+  if (fullDiv && allDiputados.length > 0) {
+    fullDiv.innerHTML = `<div class="overflow-x-auto">${tableHead}${allDiputados.map((d, i) => makeRow(d, i + 1)).join('')}</tbody></table></div>`;
+  } else if (fullDiv) {
+    fullDiv.innerHTML = '<div class="p-6 text-center text-sm text-slate-400">Los datos de asistencia se están descargando. Vuelve a consultar en unos minutos.</div>';
+  }
+}
+
+function renderCongresoCorrelacion(data, c) {
+  if (!data.correlacion || data.correlacion.length === 0) return;
+
+  const corr = data.correlacion;
+  const fmtK = v => v >= 1000 ? (v / 1000).toFixed(1) + 'K' : v.toFixed(0);
+
+  // PSOE scatter
+  const canvasPsoe = document.getElementById('chart-congreso-corr-psoe');
+  if (canvasPsoe) {
+    if (chartInstances.congresoCorrPsoe) chartInstances.congresoCorrPsoe.destroy();
+    chartInstances.congresoCorrPsoe = new Chart(canvasPsoe, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'CCAA',
+          data: corr.map(d => ({ x: d.inversion_per_capita, y: d.psoe, label: d.ccaa })),
+          backgroundColor: '#E30613',
+          borderColor: '#E3061380',
+          pointRadius: 7,
+          pointHoverRadius: 10,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const d = corr[ctx.dataIndex];
+                return [`${d.ccaa}`, `Inversión: ${fmtK(d.inversion_per_capita)} €/hab`, `Voto PSOE: ${d.psoe}%`];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Inversión per cápita (€/hab)', color: c.text }, ticks: { color: c.text, callback: v => fmtK(v) + '€' }, grid: { color: c.grid } },
+          y: { title: { display: true, text: '% Voto PSOE', color: c.text }, ticks: { color: c.text, callback: v => v + '%' }, grid: { color: c.grid } }
+        }
+      }
+    });
+  }
+
+  // PP scatter
+  const canvasPp = document.getElementById('chart-congreso-corr-pp');
+  if (canvasPp) {
+    if (chartInstances.congresoCorrPp) chartInstances.congresoCorrPp.destroy();
+    chartInstances.congresoCorrPp = new Chart(canvasPp, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'CCAA',
+          data: corr.map(d => ({ x: d.inversion_per_capita, y: d.pp, label: d.ccaa })),
+          backgroundColor: '#1D71B8',
+          borderColor: '#1D71B880',
+          pointRadius: 7,
+          pointHoverRadius: 10,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const d = corr[ctx.dataIndex];
+                return [`${d.ccaa}`, `Inversión: ${fmtK(d.inversion_per_capita)} €/hab`, `Voto PP: ${d.pp}%`];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Inversión per cápita (€/hab)', color: c.text }, ticks: { color: c.text, callback: v => fmtK(v) + '€' }, grid: { color: c.grid } },
+          y: { title: { display: true, text: '% Voto PP', color: c.text }, ticks: { color: c.text, callback: v => v + '%' }, grid: { color: c.grid } }
+        }
+      }
+    });
+  }
+}
+
+// ─── CONGRESO: SEARCH ────────────────────────────────────────
+
+function initCongresoSearch(data) {
+  const allDiputados = data.asistencia?.todos || [];
+  const grupos = data.grupos || {};
+  const colores = data.colores || {};
+
+  // Populate grupo dropdown
+  const grupoSelect = document.getElementById('congreso-search-grupo');
+  if (grupoSelect) {
+    Object.entries(grupos).forEach(([code, info]) => {
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = `${info.partido} (${code})`;
+      grupoSelect.appendChild(opt);
+    });
+  }
+
+  const searchInput = document.getElementById('congreso-search-input');
+  const sortSelect = document.getElementById('congreso-search-sort');
+  const resultsDiv = document.getElementById('congreso-search-results');
+  const statsDiv = document.getElementById('congreso-search-stats');
+  if (!searchInput || !resultsDiv) return;
+
+  const getGrupoInfo = (code) => {
+    const g = grupos[code];
+    return g ? { nombre: g.partido, color: colores[g.partido] || '#999' } : { nombre: code, color: '#999' };
+  };
+
+  function doSearch() {
+    const query = searchInput.value.toLowerCase().trim();
+    const grupo = grupoSelect?.value || '';
+    const sort = sortSelect?.value || 'nombre';
+
+    if (!query && !grupo) {
+      resultsDiv.classList.add('hidden');
+      statsDiv.classList.add('hidden');
+      return;
+    }
+
+    let results = allDiputados.filter(d => {
+      if (grupo && d.grupo !== grupo) return false;
+      if (query) {
+        const gInfo = getGrupoInfo(d.grupo);
+        const searchStr = `${d.nombre} ${d.grupo} ${gInfo.nombre}`.toLowerCase();
+        return searchStr.includes(query);
+      }
+      return true;
+    });
+
+    results.sort((a, b) => {
+      switch (sort) {
+        case 'asistencia-asc': return a.porcentaje_asistencia - b.porcentaje_asistencia;
+        case 'asistencia-desc': return b.porcentaje_asistencia - a.porcentaje_asistencia;
+        case 'votos-desc': return b.total - a.total;
+        default: return a.nombre.localeCompare(b.nombre, 'es');
+      }
+    });
+
+    statsDiv.classList.remove('hidden');
+    statsDiv.textContent = `${results.length} diputado${results.length !== 1 ? 's' : ''} encontrado${results.length !== 1 ? 's' : ''}`;
+
+    resultsDiv.classList.remove('hidden');
+    if (results.length === 0) {
+      resultsDiv.innerHTML = '<div class="p-6 text-center text-sm text-slate-400">No se encontraron diputados con ese criterio.</div>';
+      return;
+    }
+
+    const rows = results.slice(0, 100).map((d, i) => {
+      const g = getGrupoInfo(d.grupo);
+      const pct = d.porcentaje_asistencia;
+      const barColor = pct < 70 ? '#ef4444' : pct < 85 ? '#f59e0b' : pct < 95 ? '#3b82f6' : '#10b981';
+      return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+        <td class="px-3 py-2 text-xs font-bold text-slate-400 text-center">${i + 1}</td>
+        <td class="px-3 py-2"><span class="text-sm font-semibold text-slate-800 dark:text-white">${d.nombre}</span></td>
+        <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase" style="background:${g.color}20;color:${g.color}">${g.nombre}</span></td>
+        <td class="px-3 py-2 text-right"><div class="flex items-center gap-2 justify-end"><div class="w-16 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-full rounded-full" style="width:${pct}%;background:${barColor}"></div></div><span class="text-xs font-bold" style="color:${barColor}">${pct}%</span></div></td>
+        <td class="px-3 py-2 text-right text-xs text-slate-500">${d.si ?? 0}</td>
+        <td class="px-3 py-2 text-right text-xs text-slate-500">${d.no ?? 0}</td>
+        <td class="px-3 py-2 text-right text-xs text-slate-500">${d.abstencion ?? 0}</td>
+        <td class="px-3 py-2 text-right text-xs text-slate-500">${d.no_vota ?? 0}</td>
+      </tr>`;
+    }).join('');
+
+    resultsDiv.innerHTML = `<table class="w-full text-left"><thead><tr class="bg-slate-50 dark:bg-background-dark/50 sticky top-0">
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-10">#</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Diputado/a</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Grupo</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right w-32">Asistencia</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Sí</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">No</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Abst.</th>
+      <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">No vota</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+    if (results.length > 100) {
+      resultsDiv.innerHTML += `<div class="p-2 text-center text-xs text-slate-400">Mostrando 100 de ${results.length} resultados. Refine la búsqueda.</div>`;
+    }
+  }
+
+  let debounce;
+  searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(doSearch, 200); });
+  grupoSelect?.addEventListener('change', doSearch);
+  sortSelect?.addEventListener('change', doSearch);
+}
+
+// ─── PAGE: PROMESAS ELECTORALES ──────────────────────────────
+
+async function loadPromesas() {
+  return await api('promesas');
+}
+
+async function renderPromesas(container) {
+  container.innerHTML = `
+    <div class="mb-8">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Promesómetro Electoral</h2>
+      <p class="text-sm text-slate-500">Seguimiento de las promesas electorales de la XV Legislatura (23J). Cruce de programas electorales con el BOE, iniciativas parlamentarias y ejecución presupuestaria.</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8" id="promesas-kpis">
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-primary text-xl">checklist</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Total Promesas</span></div>
+        <div class="text-2xl font-black text-slate-900 dark:text-white" id="promesas-total">—</div>
+        <div class="text-xs text-slate-500 mt-1">De 4 partidos principales</div>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-emerald-500 text-xl">task_alt</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Cumplidas</span></div>
+        <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400" id="promesas-cumplidas">—</div>
+        <div class="text-xs text-slate-500 mt-1" id="promesas-pct-cumplidas">—</div>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-amber-500 text-xl">pending</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">En Proceso</span></div>
+        <div class="text-2xl font-black text-amber-600 dark:text-amber-400" id="promesas-proceso">—</div>
+        <div class="text-xs text-slate-500 mt-1" id="promesas-pct-proceso">—</div>
+      </div>
+      <div class="p-3 lg:p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+        <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-red-500 text-xl">cancel</span><span class="text-xs font-bold uppercase tracking-widest text-slate-400">Incumplidas</span></div>
+        <div class="text-2xl font-black text-red-600 dark:text-red-400" id="promesas-incumplidas">—</div>
+        <div class="text-xs text-slate-500 mt-1" id="promesas-pct-incumplidas">—</div>
+      </div>
+    </div>
+
+    <!-- Promesómetro -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Promesómetro por Partido</h3>
+      <p class="text-xs text-slate-500 mb-4">Grado de cumplimiento de las promesas electorales. Verde = cumplida, amarillo = en trámite/parcial, rojo = incumplida, gris = rechazada (oposición).</p>
+      <div id="promesometro-container" class="space-y-4"></div>
+    </div>
+
+    <!-- Buscador de Promesas -->
+    <div class="mb-8">
+      <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg text-primary">manage_search</span>Buscador de Promesas
+        </h3>
+        <div class="flex flex-col sm:flex-row gap-3 mb-3">
+          <div class="flex-1 relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+            <input type="text" id="promesas-search-input" placeholder="Buscar promesa, tema, partido..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all">
+          </div>
+          <select id="promesas-search-partido" class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark text-slate-800 dark:text-white text-sm min-w-[140px]">
+            <option value="">Todos</option>
+            <option value="PSOE">PSOE</option>
+            <option value="Sumar">Sumar</option>
+            <option value="PP">PP</option>
+            <option value="VOX">VOX</option>
+          </select>
+          <select id="promesas-search-estado" class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark text-slate-800 dark:text-white text-sm min-w-[150px]">
+            <option value="">Todos los estados</option>
+            <option value="cumplida">✅ Cumplida</option>
+            <option value="parcial">🟡 Parcial</option>
+            <option value="en_tramite">🔵 En trámite</option>
+            <option value="incumplida">🔴 Incumplida</option>
+            <option value="no_iniciada">⚪ No iniciada</option>
+            <option value="rechazada">❌ Rechazada</option>
+            <option value="solo_ccaa">🏛️ Solo en CCAA</option>
+          </select>
+        </div>
+        <div id="promesas-search-stats" class="text-xs text-slate-400 mb-2 hidden"></div>
+        <div id="promesas-search-results" class="space-y-2 hidden"></div>
+      </div>
+    </div>
+
+    <!-- Nube de Palabras: Programa vs BOE -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Nube de Palabras: Programa vs. Realidad Legislativa</h3>
+      <p class="text-xs text-slate-500 mb-4">Comparativa entre las palabras más usadas en el programa electoral y las presentes en su actividad legislativa real. ¿Coinciden las palabras con los hechos?</p>
+      <div class="flex flex-wrap gap-2 mb-4" id="promesas-cloud-tabs"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+          <h4 class="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 text-center">📜 Lo que prometen (Programa Electoral)</h4>
+          <div style="height:320px"><canvas id="chart-promesas-cloud-programa"></canvas></div>
+        </div>
+        <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+          <h4 class="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 text-center">📰 Lo que hacen (Actividad Legislativa)</h4>
+          <div style="height:320px"><canvas id="chart-promesas-cloud-legislativo"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline de Contradicciones -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Timeline de Contradicciones</h3>
+      <p class="text-xs text-slate-500 mb-4">Promesas de campaña confrontadas con la realidad: lo que dijeron vs. lo que hicieron. Cada entrada incluye fuente verificable.</p>
+      <div id="timeline-contradicciones" class="space-y-4"></div>
+    </div>
+
+    <!-- Patrimonio de Diputados -->
+    <div class="mb-8">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Patrimonio de Diputados: Antes vs. Después</h3>
+      <p class="text-xs text-slate-500 mb-4">Evolución patrimonial declarada de diputados notables. Datos de las declaraciones de bienes y actividades publicadas por el Congreso.</p>
+      <div id="patrimonio-container"></div>
+      <div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4 mt-4">
+        <h4 class="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">Variación Patrimonial</h4>
+        <div style="height:340px"><canvas id="chart-patrimonio"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Source attribution -->
+    <div class="text-center text-xs text-slate-400 mt-6 pb-4">
+      <p>Fuentes: <a href="https://www.boe.es" target="_blank" class="hover:underline">BOE</a> · <a href="https://www.congreso.es/es/datos-abiertos" target="_blank" class="hover:underline">Congreso</a> · <a href="https://transparencia.gob.es" target="_blank" class="hover:underline">Portal de Transparencia</a> · <a href="https://www.cis.es" target="_blank" class="hover:underline">CIS</a> · Programas electorales de los partidos</p>
+      <p class="mt-1">⚠️ Los datos de patrimonio proceden de declaraciones oficiales publicadas por el Congreso. Las keywords del programa son estimaciones del análisis textual.</p>
+    </div>
+  `;
+
+  const data = await loadPromesas();
+  if (!data || data.error) return;
+  renderPromesasData(data);
+}
+
+function renderPromesasData(data) {
+  const el = id => document.getElementById(id);
+  const isDark = document.documentElement.classList.contains('dark');
+  const c = { text: isDark ? '#94a3b8' : '#64748b', grid: isDark ? '#1e293b' : '#e2e8f0', white: isDark ? '#f8fafc' : '#0f172a' };
+
+  // KPIs
+  const t = data.totales || {};
+  if (el('promesas-total')) el('promesas-total').textContent = t.promesas || 0;
+  if (el('promesas-cumplidas')) el('promesas-cumplidas').textContent = t.cumplidas || 0;
+  if (el('promesas-pct-cumplidas')) el('promesas-pct-cumplidas').textContent = `${t.pct_cumplidas || 0}% del total`;
+  if (el('promesas-proceso')) el('promesas-proceso').textContent = t.en_proceso || 0;
+  if (el('promesas-pct-proceso')) el('promesas-pct-proceso').textContent = `En trámite o parcial`;
+  if (el('promesas-incumplidas')) el('promesas-incumplidas').textContent = t.incumplidas || 0;
+  if (el('promesas-pct-incumplidas')) el('promesas-pct-incumplidas').textContent = `Sin avance real`;
+
+  renderPromesometro(data);
+  initPromesasSearch(data);
+  renderNubesPalabras(data, c);
+  renderTimelineContradicciones(data);
+  renderPatrimonio(data, c);
+}
+
+// ─── PROMESÓMETRO ────────────────────────────────────────────
+
+function renderPromesometro(data) {
+  const container = document.getElementById('promesometro-container');
+  if (!container) return;
+  const stats = data.stats_partidos || {};
+  const order = ['PSOE', 'Sumar', 'PP', 'VOX'];
+
+  container.innerHTML = order.filter(p => stats[p]).map(siglas => {
+    const s = stats[siglas];
+    const total = s.total || 1;
+    const c = s.conteos || {};
+    const cumplidas = c.cumplida || 0;
+    const enProceso = (c.parcial || 0) + (c.en_tramite || 0);
+    const incumplidas = (c.incumplida || 0) + (c.no_iniciada || 0);
+    const rechazadas = (c.rechazada || 0) + (c.solo_ccaa || 0);
+    const pctC = (cumplidas / total * 100).toFixed(0);
+    const pctP = (enProceso / total * 100).toFixed(0);
+    const pctI = (incumplidas / total * 100).toFixed(0);
+    const pctR = (rechazadas / total * 100).toFixed(0);
+    const rolBadge = s.rol.includes('Gobierno') ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold">GOB</span>' : '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">OPOS</span>';
+
+    return `<div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full" style="background:${s.color}"></div>
+          <span class="text-sm font-bold text-slate-800 dark:text-white">${siglas}</span>
+          ${rolBadge}
+        </div>
+        <div class="text-right">
+          <span class="text-lg font-black" style="color:${s.color}">${s.progreso_medio}%</span>
+          <span class="text-xs text-slate-400 ml-1">progreso medio</span>
+        </div>
+      </div>
+      <div class="w-full h-6 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800 mb-2">
+        ${pctC > 0 ? `<div class="h-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-white" style="width:${pctC}%" title="Cumplidas: ${cumplidas}">${cumplidas}</div>` : ''}
+        ${pctP > 0 ? `<div class="h-full bg-amber-400 flex items-center justify-center text-[10px] font-bold text-slate-800" style="width:${pctP}%" title="En proceso: ${enProceso}">${enProceso}</div>` : ''}
+        ${pctI > 0 ? `<div class="h-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white" style="width:${pctI}%" title="Incumplidas: ${incumplidas}">${incumplidas}</div>` : ''}
+        ${pctR > 0 ? `<div class="h-full bg-slate-400 flex items-center justify-center text-[10px] font-bold text-white" style="width:${pctR}%" title="Rechazadas/Solo CCAA: ${rechazadas}">${rechazadas}</div>` : ''}
+      </div>
+      <div class="flex flex-wrap gap-3 text-[10px] text-slate-500">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Cumplidas: ${cumplidas}</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>En proceso: ${enProceso}</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span>Incumplidas: ${incumplidas}</span>
+        ${rechazadas > 0 ? `<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Rechazadas: ${rechazadas}</span>` : ''}
+        <span class="ml-auto font-bold">Total: ${total}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── PROMESAS: BÚSQUEDA ──────────────────────────────────────
+
+function initPromesasSearch(data) {
+  const promesas = data.promesas || [];
+  const searchInput = document.getElementById('promesas-search-input');
+  const partidoSelect = document.getElementById('promesas-search-partido');
+  const estadoSelect = document.getElementById('promesas-search-estado');
+  const resultsDiv = document.getElementById('promesas-search-results');
+  const statsDiv = document.getElementById('promesas-search-stats');
+  if (!searchInput || !resultsDiv) return;
+
+  const estadoColors = {
+    cumplida: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400', icon: '✅', label: 'Cumplida' },
+    parcial: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', icon: '🟡', label: 'Parcial' },
+    en_tramite: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', icon: '🔵', label: 'En trámite' },
+    incumplida: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', icon: '🔴', label: 'Incumplida' },
+    no_iniciada: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400', icon: '⚪', label: 'No iniciada' },
+    rechazada: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400', icon: '❌', label: 'Rechazada' },
+    solo_ccaa: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-400', icon: '🏛️', label: 'Solo CCAA' },
+  };
+
+  function doSearch() {
+    const query = searchInput.value.toLowerCase().trim();
+    const partido = partidoSelect?.value || '';
+    const estado = estadoSelect?.value || '';
+
+    if (!query && !partido && !estado) {
+      resultsDiv.classList.add('hidden');
+      statsDiv.classList.add('hidden');
+      return;
+    }
+
+    let results = promesas.filter(p => {
+      if (partido && p.partido !== partido) return false;
+      if (estado && p.estado !== estado) return false;
+      if (query) {
+        const s = `${p.titulo} ${p.descripcion} ${p.categoria} ${p.partido} ${p.partido_nombre}`.toLowerCase();
+        return s.includes(query);
+      }
+      return true;
+    });
+
+    statsDiv.classList.remove('hidden');
+    statsDiv.textContent = `${results.length} promesa${results.length !== 1 ? 's' : ''} encontrada${results.length !== 1 ? 's' : ''}`;
+    resultsDiv.classList.remove('hidden');
+
+    if (results.length === 0) {
+      resultsDiv.innerHTML = '<div class="p-4 text-center text-sm text-slate-400">No se encontraron promesas.</div>';
+      return;
+    }
+
+    resultsDiv.innerHTML = results.slice(0, 30).map(p => {
+      const e = estadoColors[p.estado] || estadoColors.no_iniciada;
+      const progColor = p.progreso >= 80 ? '#10b981' : p.progreso >= 40 ? '#f59e0b' : '#ef4444';
+      const evidencias = (p.evidencias || []).map(ev =>
+        ev.tipo === 'boe' && ev.url ? `<a href="${ev.url}" target="_blank" class="text-primary hover:underline text-[10px]">📄 ${ev.referencia}</a>` :
+        `<span class="text-[10px] text-slate-400">${ev.tipo === 'boe' ? '📄' : ev.tipo === 'congreso' ? '🏛️' : '📰'} ${ev.titulo || ev.referencia}</span>`
+      ).join(' · ');
+      return `<div class="rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-3 hover:border-primary/30 transition-colors">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold" style="background:${p.partido_color}20;color:${p.partido_color}">${p.partido}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">${p.categoria}</span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white">${p.titulo}</h4>
+            <p class="text-xs text-slate-500 mt-0.5">${p.descripcion}</p>
+          </div>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${e.bg} ${e.text}">${e.icon} ${e.label}</span>
+            <div class="flex items-center gap-1.5"><div class="w-12 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-full rounded-full" style="width:${p.progreso}%;background:${progColor}"></div></div><span class="text-[10px] font-bold" style="color:${progColor}">${p.progreso}%</span></div>
+          </div>
+        </div>
+        ${evidencias ? `<div class="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-border-dark">${evidencias}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // Show all on initial load
+  let debounce;
+  searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(doSearch, 200); });
+  partidoSelect?.addEventListener('change', doSearch);
+  estadoSelect?.addEventListener('change', doSearch);
+
+  // Auto-show all promises on load
+  setTimeout(() => {
+    statsDiv.classList.remove('hidden');
+    statsDiv.textContent = `${promesas.length} promesas en seguimiento`;
+    resultsDiv.classList.remove('hidden');
+    resultsDiv.innerHTML = promesas.slice(0, 30).map(p => {
+      const e = estadoColors[p.estado] || estadoColors.no_iniciada;
+      const progColor = p.progreso >= 80 ? '#10b981' : p.progreso >= 40 ? '#f59e0b' : '#ef4444';
+      const evidencias = (p.evidencias || []).map(ev =>
+        ev.tipo === 'boe' && ev.url ? `<a href="${ev.url}" target="_blank" class="text-primary hover:underline text-[10px]">📄 ${ev.referencia}</a>` :
+        `<span class="text-[10px] text-slate-400">${ev.tipo === 'boe' ? '📄' : ev.tipo === 'congreso' ? '🏛️' : '📰'} ${ev.titulo || ev.referencia}</span>`
+      ).join(' · ');
+      return `<div class="rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark p-3 hover:border-primary/30 transition-colors">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold" style="background:${p.partido_color}20;color:${p.partido_color}">${p.partido}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">${p.categoria}</span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white">${p.titulo}</h4>
+            <p class="text-xs text-slate-500 mt-0.5">${p.descripcion}</p>
+          </div>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${e.bg} ${e.text}">${e.icon} ${e.label}</span>
+            <div class="flex items-center gap-1.5"><div class="w-12 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-full rounded-full" style="width:${p.progreso}%;background:${progColor}"></div></div><span class="text-[10px] font-bold" style="color:${progColor}">${p.progreso}%</span></div>
+          </div>
+        </div>
+        ${evidencias ? `<div class="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-border-dark">${evidencias}</div>` : ''}
+      </div>`;
+    }).join('');
+    if (promesas.length > 30) resultsDiv.innerHTML += `<div class="p-2 text-center text-xs text-slate-400">Mostrando 30 de ${promesas.length}. Use los filtros para refinar.</div>`;
+  }, 50);
+}
+
+// ─── NUBES DE PALABRAS ───────────────────────────────────────
+
+function renderNubesPalabras(data, c) {
+  const keywords = data.keywords || {};
+  const stats = data.stats_partidos || {};
+  const tabsContainer = document.getElementById('promesas-cloud-tabs');
+  if (!tabsContainer) return;
+
+  const parties = Object.keys(keywords);
+  let activeParty = parties[0] || 'PSOE';
+
+  function renderCloud(party) {
+    const kw = keywords[party] || {};
+    const programa = kw.programa || [];
+    const legislativo = kw.legislativo || [];
+    const color = stats[party]?.color || '#999';
+
+    // Programa cloud
+    const canvasP = document.getElementById('chart-promesas-cloud-programa');
+    if (canvasP && programa.length > 0) {
+      if (chartInstances.promesasCloudProg) chartInstances.promesasCloudProg.destroy();
+      const maxP = Math.max(...programa.map(w => w[1]));
+      chartInstances.promesasCloudProg = new Chart(canvasP, {
+        type: 'wordCloud',
+        data: {
+          labels: programa.map(w => w[0]),
+          datasets: [{
+            label: 'Programa',
+            data: programa.map(w => 10 + (w[1] / maxP) * 60),
+            color: programa.map(() => color),
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: ctx => `${programa[ctx.dataIndex][0]}: ${programa[ctx.dataIndex][1]} menciones` }
+          }},
+          elements: { word: { minRotation: -15, maxRotation: 15 } }
+        }
+      });
+    }
+
+    // Legislative cloud
+    const canvasL = document.getElementById('chart-promesas-cloud-legislativo');
+    if (canvasL && legislativo.length > 0) {
+      if (chartInstances.promesasCloudLeg) chartInstances.promesasCloudLeg.destroy();
+      const maxL = Math.max(...legislativo.map(w => w[1]));
+      chartInstances.promesasCloudLeg = new Chart(canvasL, {
+        type: 'wordCloud',
+        data: {
+          labels: legislativo.map(w => w[0]),
+          datasets: [{
+            label: 'Legislativo',
+            data: legislativo.map(w => 10 + (w[1] / maxL) * 60),
+            color: legislativo.map(() => color + 'CC'),
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: {
+            callbacks: { label: ctx => `${legislativo[ctx.dataIndex][0]}: ${legislativo[ctx.dataIndex][1]} apariciones` }
+          }},
+          elements: { word: { minRotation: -15, maxRotation: 15 } }
+        }
+      });
+    }
+  }
+
+  // Render tabs
+  tabsContainer.innerHTML = parties.map(p => {
+    const s = stats[p] || {};
+    const active = p === activeParty;
+    return `<button onclick="window._switchPromesasCloud('${p}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${active ? 'text-white shadow-md' : 'bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-slate-600 dark:text-slate-400 hover:border-primary/30'}" style="${active ? `background:${s.color || '#999'}` : ''}" data-cloud-tab="${p}">${p}</button>`;
+  }).join('');
+
+  window._switchPromesasCloud = (party) => {
+    activeParty = party;
+    document.querySelectorAll('[data-cloud-tab]').forEach(btn => {
+      const s = stats[btn.dataset.cloudTab] || {};
+      if (btn.dataset.cloudTab === party) {
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-white shadow-md';
+        btn.style.background = s.color || '#999';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-slate-600 dark:text-slate-400 hover:border-primary/30';
+        btn.style.background = '';
+      }
+    });
+    renderCloud(party);
+  };
+
+  renderCloud(activeParty);
+}
+
+// ─── TIMELINE DE CONTRADICCIONES ─────────────────────────────
+
+function renderTimelineContradicciones(data) {
+  const container = document.getElementById('timeline-contradicciones');
+  if (!container) return;
+  const contras = data.contradicciones || [];
+  const stats = data.stats_partidos || {};
+
+  if (contras.length === 0) {
+    container.innerHTML = '<div class="text-center p-6 text-sm text-slate-400">No hay datos de contradicciones disponibles.</div>';
+    return;
+  }
+
+  container.innerHTML = contras.map(ct => {
+    const color = stats[ct.partido]?.color || '#999';
+    const boeLink = ct.realidad.url ? `<a href="${ct.realidad.url}" target="_blank" class="text-primary hover:underline text-xs">📄 ${ct.realidad.referencia}</a>` : (ct.realidad.referencia ? `<span class="text-xs text-slate-400">${ct.realidad.referencia}</span>` : '');
+
+    return `<div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+      <div class="px-4 py-2 flex items-center gap-2 border-b border-slate-100 dark:border-border-dark" style="background:${color}10">
+        <div class="w-3 h-3 rounded-full" style="background:${color}"></div>
+        <span class="text-xs font-bold" style="color:${color}">${ct.partido}</span>
+        <span class="text-sm font-bold text-slate-800 dark:text-white flex-1">${ct.titulo}</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-border-dark">
+        <!-- Lo que dijeron -->
+        <div class="p-4">
+          <div class="flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-amber-500 text-base">record_voice_over</span><span class="text-[10px] font-bold uppercase tracking-widest text-amber-600">Lo que dijeron</span></div>
+          <blockquote class="text-sm italic text-slate-700 dark:text-slate-300 border-l-2 border-amber-400 pl-3 mb-2">"${ct.promesa.texto}"</blockquote>
+          <p class="text-[10px] text-slate-400">— ${ct.promesa.autor}, ${ct.promesa.fecha} · ${ct.promesa.fuente}</p>
+        </div>
+        <!-- Lo que hicieron -->
+        <div class="p-4">
+          <div class="flex items-center gap-1 mb-2"><span class="material-symbols-outlined text-red-500 text-base">gavel</span><span class="text-[10px] font-bold uppercase tracking-widest text-red-600">Lo que hicieron</span></div>
+          <p class="text-sm text-slate-700 dark:text-slate-300 mb-2">${ct.realidad.texto}</p>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-400">${ct.realidad.fecha}</span>
+            ${boeLink}
+          </div>
+        </div>
+      </div>
+      ${ct.contexto ? `<div class="px-4 py-2 bg-slate-50 dark:bg-background-dark/50 border-t border-slate-100 dark:border-border-dark"><p class="text-[11px] text-slate-500"><strong>Contexto:</strong> ${ct.contexto}</p></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ─── PATRIMONIO ──────────────────────────────────────────────
+
+function renderPatrimonio(data, c) {
+  const container = document.getElementById('patrimonio-container');
+  const patrimonio = data.patrimonio || [];
+  if (!container || patrimonio.length === 0) return;
+
+  const stats = data.stats_partidos || {};
+  const fmtK = v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M€' : v >= 1000 ? (v/1000).toFixed(0) + 'K€' : v + '€';
+
+  // Table
+  container.innerHTML = `<div class="rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead><tr class="bg-slate-50 dark:bg-background-dark/50">
+          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nombre</th>
+          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Cargo</th>
+          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Partido</th>
+          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Antes</th>
+          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Después</th>
+          <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Variación</th>
+        </tr></thead>
+        <tbody>${patrimonio.map(p => {
+          const col = stats[p.partido]?.color || '#999';
+          const varColor = p.variacion_pct > 50 ? '#ef4444' : p.variacion_pct > 20 ? '#f59e0b' : '#10b981';
+          return `<tr class="border-b border-slate-100 dark:border-border-dark hover:bg-slate-50/50 dark:hover:bg-background-dark/30 transition-colors">
+            <td class="px-4 py-2.5"><span class="text-sm font-semibold text-slate-800 dark:text-white">${p.nombre}</span></td>
+            <td class="px-4 py-2.5 text-xs text-slate-500">${p.cargo}</td>
+            <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:${col}20;color:${col}">${p.partido}</span></td>
+            <td class="px-4 py-2.5 text-right text-sm text-slate-600 dark:text-slate-400">${fmtK(p.antes.total_estimado)} <span class="text-[10px] text-slate-400">(${p.antes.año})</span></td>
+            <td class="px-4 py-2.5 text-right text-sm font-semibold text-slate-800 dark:text-white">${fmtK(p.despues.total_estimado)} <span class="text-[10px] text-slate-400">(${p.despues.año})</span></td>
+            <td class="px-4 py-2.5 text-right"><span class="text-sm font-bold" style="color:${varColor}">+${p.variacion_pct}%</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  // Chart
+  const canvas = document.getElementById('chart-patrimonio');
+  if (!canvas) return;
+  const sorted = [...patrimonio].sort((a, b) => b.variacion_pct - a.variacion_pct);
+  if (chartInstances.patrimonio) chartInstances.patrimonio.destroy();
+  chartInstances.patrimonio = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(p => p.nombre.split(' ').slice(0, 2).join(' ')),
+      datasets: [
+        {
+          label: 'Antes',
+          data: sorted.map(p => p.antes.total_estimado),
+          backgroundColor: sorted.map(p => (stats[p.partido]?.color || '#999') + '60'),
+          borderColor: sorted.map(p => stats[p.partido]?.color || '#999'),
+          borderWidth: 1, borderRadius: 4,
+        },
+        {
+          label: 'Después',
+          data: sorted.map(p => p.despues.total_estimado),
+          backgroundColor: sorted.map(p => stats[p.partido]?.color || '#999'),
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {
+        legend: { labels: { color: c.text, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => {
+          const p = sorted[ctx.dataIndex];
+          const val = ctx.raw;
+          const label = ctx.dataset.label === 'Antes' ? `Antes (${p.antes.año})` : `Después (${p.despues.año})`;
+          return `${label}: ${val >= 1e6 ? (val/1e6).toFixed(1)+'M' : (val/1e3).toFixed(0)+'K'}€`;
+        }}}
+      },
+      scales: {
+        x: { ticks: { color: c.text, callback: v => v >= 1e6 ? (v/1e6).toFixed(0)+'M€' : (v/1e3).toFixed(0)+'K€' }, grid: { color: c.grid } },
+        y: { ticks: { color: c.text, font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
 }
 
 // ─── LEGAL PAGES ─────────────────────────────────────────────

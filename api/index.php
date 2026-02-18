@@ -21,6 +21,8 @@ require_once __DIR__ . '/data_store.php';
 require_once __DIR__ . '/cross_reference.php';
 require_once __DIR__ . '/bdns_parser.php';
 require_once __DIR__ . '/borme_parser.php';
+require_once __DIR__ . '/congreso_parser.php';
+require_once __DIR__ . '/promesas_parser.php';
 
 // Handle CORS preflight
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
@@ -84,6 +86,12 @@ try {
             break;
         case 'borme-status':
             handle_borme_status();
+            break;
+        case 'congreso':
+            handle_congreso();
+            break;
+        case 'promesas':
+            handle_promesas();
             break;
         default:
             json_response(['error' => 'Unknown action', 'available' => ['status', 'dashboard', 'documentos', 'licitaciones', 'referencias', 'analisis-tematico', 'departamentos', 'resumen-gasto', 'analisis-empresas', 'subvenciones', 'subvenciones-buscar']], 404);
@@ -825,4 +833,32 @@ function handle_socios() {
 function handle_borme_status() {
     $status = borme_status();
     json_response($status);
+}
+
+// ─── CONGRESO ────────────────────────────────────────────────
+
+function handle_congreso() {
+    $cacheKey = 'congreso_resumen_' . date('Y-m-d');
+    $cached = cache_get($cacheKey);
+    if ($cached) {
+        json_response($cached);
+        return;
+    }
+    
+    $data = congreso_resumen();
+    cache_set($cacheKey, $data, 1800);
+    json_response($data);
+}
+
+function handle_promesas() {
+    $cacheKey = 'promesas_resumen_' . date('Y-m-d');
+    $cached = cache_get($cacheKey);
+    if ($cached) {
+        json_response($cached);
+        return;
+    }
+    
+    $data = promesas_resumen();
+    cache_set($cacheKey, $data, 3600);
+    json_response($data);
 }

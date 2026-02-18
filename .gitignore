@@ -2,6 +2,7 @@
 api/data/boe/
 api/data/bdns/
 api/data/borme/
+api/data/congreso/
 api/data/meta.json
 api/data/*.log
 api/cache/
