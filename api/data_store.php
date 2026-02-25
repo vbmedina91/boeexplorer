@@ -740,3 +740,437 @@ function analizar_empresas($dias = 90) {
         'top_empresa' => $topEmpresa ? $topEmpresa['nombre'] : null,
     ];
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  RED-FLAG ANALYSIS (BORME × Licitaciones cross-reference)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Cross-reference licitaciones adjudicatarios with BORME registry data.
+ *
+ * Detects:
+ *  1. capital_ridiculo  – capital social < 10 000 € winning contracts > 100 000 €
+ *  2. empresa_reciente  – constituted < 6 months before contract date
+ *  3. disolucion_post   – company dissolved/extinguished after winning a contract
+ *  4. multi_admin       – same person appears as administrator in 2+ awarded companies
+ *  5. cambio_cargo      – appointment / cessation within ±60 days of an award date
+ *  6. negociado_sin_pub – contracts via "Negociado sin publicidad" (lowest transparency)
+ *
+ * Note: Contratos menores (< 15 000 € servicios / < 40 000 € obras) do NOT appear
+ * in BOE V-A. The flag negociado_sin_pub highlights the next least-transparent tier.
+ *
+ * @param int $dias  number of recent working days to analyse (default 90)
+ * @return array     structured result with alertas, resumen, empresas_cruzadas
+ */
+function analizar_alertas_licitaciones(int $dias = 90): array {
+
+    require_once __DIR__ . '/borme_parser.php';
+
+    // Helper: normalize company name for dedup (INDRA SISTEMAS S.A. == Indra Sistemas SA)
+    $normEmpresa = function(string $name): string {
+        $n = mb_strtoupper(trim($name));
+        $n = borme_normalize($n);
+        // Strip legal suffixes
+        $n = preg_replace('/\b(S\.?A\.?U?|S\.?L\.?U?|S\.?L\.?L?|S\.?R\.?L\.?|S\.?C\.?|S\.?COOP\.?|AIE)\b/', '', $n);
+        $n = preg_replace('/[.,;:"\'-]+/', ' ', $n);
+        $n = preg_replace('/\s+/', ' ', trim($n));
+        return $n;
+    };
+
+    // ── 1. Load licitaciones with adjudicatario ──────────────────
+    $lics = load_licitaciones_ultimos_dias($dias);
+    $conAdj = array_filter($lics, fn($l) => !empty($l['adjudicatario']));
+
+    // ── 2. Load BORME index ──────────────────────────────────────
+    $indexFile = BORME_DATA_DIR . '/../borme/index.json';
+    $bormeIndex = file_exists($indexFile)
+        ? json_decode(file_get_contents($indexFile), true) ?? []
+        : [];
+
+    // Build normalised lookup upper→key
+    $normIdx = [];
+    $cleanIdx = [];  // pre-cleaned (no punctuation) for fuzzy matching
+    foreach ($bormeIndex as $k => $v) {
+        $nk = borme_normalize(mb_strtoupper($k));
+        $normIdx[$nk] = $k;
+        $ck = preg_replace('/[.,]+/', '', $nk);
+        $ck = preg_replace('/\s+/', ' ', trim($ck));
+        $cleanIdx[$ck] = $k;
+    }
+
+    // ── 3. Match adjudicatarios → BORME entries ──────────────────
+    // Group licitaciones by adjudicatario
+    $byAdj = [];
+    foreach ($conAdj as $l) {
+        $name = trim($l['adjudicatario']);
+        $byAdj[$name][] = $l;
+    }
+
+    // First pass: identify which adjudicatarios have BORME matches
+    $matchedAdj = [];  // adjName → bormeKey
+    foreach ($byAdj as $adjName => $contratos) {
+        $adjNorm = borme_normalize(mb_strtoupper($adjName));
+        $bormeKey = $normIdx[$adjNorm] ?? null;
+
+        // Fuzzy: use pre-cleaned index (O(1) lookup instead of O(N) scan)
+        if (!$bormeKey) {
+            $adjClean = preg_replace('/[.,]+/', '', $adjNorm);
+            $adjClean = preg_replace('/\s+/', ' ', trim($adjClean));
+            $bormeKey = $cleanIdx[$adjClean] ?? null;
+        }
+
+        if ($bormeKey) {
+            $matchedAdj[$adjName] = $bormeKey;
+        }
+    }
+
+    // Collect ALL unique dates needed from matched companies
+    $neededDates = [];
+    $companyDates = []; // bormeKey → [dates]
+    foreach ($matchedAdj as $adjName => $bormeKey) {
+        $info = $bormeIndex[$bormeKey];
+        $companyDates[$bormeKey] = $info['fechas'] ?? [];
+        foreach ($info['fechas'] as $f) {
+            $neededDates[$f] = true;
+        }
+    }
+
+    // Bulk-load: load each BORME day file ONCE and extract ONLY needed companies
+    $companyActs = []; // bormeKey → [acts]
+    $neededKeys = array_flip(array_values($matchedAdj)); // bormeKey → true
+    foreach (array_keys($neededDates) as $fecha) {
+        $dayData = borme_load_day($fecha);
+        if (!$dayData || !isset($dayData['entries'])) continue;
+        foreach ($dayData['entries'] as $entry) {
+            $ek = mb_strtoupper($entry['empresa']);
+            if (isset($neededKeys[$ek])) {
+                $companyActs[$ek][] = array_merge($entry, ['fecha' => $fecha]);
+            }
+        }
+    }
+
+    $alertas = [];
+    $empresasData = [];
+    $adminGlobal = [];
+
+    foreach ($matchedAdj as $adjName => $bormeKey) {
+        $contratos = $byAdj[$adjName];
+        $allActs = $companyActs[$bormeKey] ?? [];
+
+        // Determine company metadata
+        $capital = null;
+        $fechaConstitucion = null;
+        $personas = [];
+        $ceses = [];
+        $nombramientos = [];
+        $disuelta = false;
+        $disolucionFecha = null;
+
+        foreach ($allActs as $act) {
+            // Capital (from Constitución in BORME)
+            if (isset($act['capital']) && $act['capital'] > 0) {
+                $capital = $act['capital'];
+            }
+            // Constitución date
+            if (in_array('Constitución', $act['actos'])) {
+                $fechaConstitucion = $act['fecha'];
+            }
+            // Disolución
+            if (in_array('Disolución', $act['actos']) || in_array('Extinción', $act['actos'])) {
+                $disuelta = true;
+                $disolucionFecha = $act['fecha'];
+            }
+
+            // People tracking
+            foreach ($act['personas'] ?? [] as $p) {
+                $pName = mb_strtoupper(trim($p['nombre']));
+                $accion = $p['accion'] ?? '';
+                $cargo = $p['cargo'] ?? '';
+
+                $personas[$pName] = [
+                    'nombre' => $p['nombre'],
+                    'cargo' => $cargo,
+                    'ultima_fecha' => $act['fecha'],
+                ];
+
+                if (in_array($accion, ['Ceses/Dimisiones', 'Revocaciones'])) {
+                    $ceses[] = ['nombre' => $p['nombre'], 'cargo' => $cargo, 'fecha' => $act['fecha']];
+                }
+                if (in_array($accion, ['Nombramientos', 'Reelecciones', 'Constitución'])) {
+                    $nombramientos[] = ['nombre' => $p['nombre'], 'cargo' => $cargo, 'fecha' => $act['fecha']];
+                }
+
+                // Global admin map for multi-admin detection
+                // Use normalized company name to avoid INDRA SISTEMAS S.A. ≠ Indra Sistemas SA
+                $adjNormName = $normEmpresa($adjName);
+                if (!isset($adminGlobal[$pName])) {
+                    $adminGlobal[$pName] = ['nombre' => $p['nombre'], 'empresas' => [], 'empresas_norm' => []];
+                }
+                if (!in_array($adjNormName, $adminGlobal[$pName]['empresas_norm'])) {
+                    $adminGlobal[$pName]['empresas'][] = $adjName;
+                    $adminGlobal[$pName]['empresas_norm'][] = $adjNormName;
+                }
+            }
+        }
+
+        // Prepare enriched data
+        $empresaInfo = [
+            'adjudicatario' => $adjName,
+            'borme_empresa' => $info['empresa'],
+            'capital' => $capital,
+            'fecha_constitucion' => $fechaConstitucion,
+            'disuelta' => $disuelta,
+            'disolucion_fecha' => $disolucionFecha,
+            'total_contratos' => count($contratos),
+            'importe_total' => array_sum(array_map(fn($c) => $c['importe'] ?? 0, $contratos)),
+            'personas_activas' => count($personas),
+            'contratos' => array_map(fn($c) => [
+                'id' => $c['id'],
+                'titulo' => mb_substr($c['titulo'], 0, 120),
+                'importe' => $c['importe'] ?? null,
+                'fecha' => $c['fecha'],
+                'departamento' => $c['departamento'] ?? '',
+                'procedimiento' => $c['procedimiento'] ?? null,
+            ], $contratos),
+            'nombramientos' => array_slice($nombramientos, -10), // last 10
+            'ceses' => array_slice($ceses, -10),
+        ];
+        $empresasData[] = $empresaInfo;
+
+        // ── Flag 1: Capital ridículo ─────────────────────────────
+        if ($capital !== null && $capital < 10000) {
+            $bigContracts = array_filter($contratos, fn($c) => ($c['importe'] ?? 0) > 100000);
+            if (!empty($bigContracts)) {
+                foreach ($bigContracts as $c) {
+                    $alertas[] = [
+                        'tipo' => 'capital_ridiculo',
+                        'nivel' => 'alta',
+                        'icono' => 'account_balance',
+                        'empresa' => $adjName,
+                        'capital' => $capital,
+                        'importe_contrato' => $c['importe'],
+                        'ratio' => round(($c['importe'] ?? 0) / max($capital, 1), 1),
+                        'contrato_id' => $c['id'],
+                        'contrato_fecha' => $c['fecha'],
+                        'contrato_titulo' => mb_substr($c['titulo'], 0, 100),
+                        'departamento' => $c['departamento'] ?? '',
+                        'mensaje' => "{$adjName} (capital: " . number_format($capital, 0, ',', '.') . " €) gana contrato de " . number_format($c['importe'], 0, ',', '.') . " € — ratio " . round(($c['importe'] ?? 0) / max($capital, 1), 0) . ":1",
+                    ];
+                }
+            }
+        }
+
+        // ── Flag 2: Empresa recién creada ────────────────────────
+        if ($fechaConstitucion) {
+            $dtConst = new DateTime($fechaConstitucion);
+            foreach ($contratos as $c) {
+                $dtContrato = new DateTime($c['fecha']);
+                $diff = $dtConst->diff($dtContrato);
+                $meses = $diff->m + ($diff->y * 12);
+                if (!$diff->invert && $meses < 6) {
+                    $alertas[] = [
+                        'tipo' => 'empresa_reciente',
+                        'nivel' => 'alta',
+                        'icono' => 'schedule',
+                        'empresa' => $adjName,
+                        'fecha_constitucion' => $fechaConstitucion,
+                        'meses_antes' => $meses,
+                        'importe_contrato' => $c['importe'] ?? null,
+                        'contrato_id' => $c['id'],
+                        'contrato_fecha' => $c['fecha'],
+                        'contrato_titulo' => mb_substr($c['titulo'], 0, 100),
+                        'departamento' => $c['departamento'] ?? '',
+                        'mensaje' => "{$adjName} constituida el {$fechaConstitucion} gana contrato el {$c['fecha']} ({$meses} meses después)",
+                    ];
+                }
+            }
+        }
+
+        // ── Flag 3: Disolución post-adjudicación ─────────────────
+        if ($disuelta && $disolucionFecha) {
+            $dtDis = new DateTime($disolucionFecha);
+            foreach ($contratos as $c) {
+                $dtContrato = new DateTime($c['fecha']);
+                if ($dtDis >= $dtContrato) {
+                    $diffDays = (int)$dtContrato->diff($dtDis)->days;
+                    $alertas[] = [
+                        'tipo' => 'disolucion_post',
+                        'nivel' => 'alta',
+                        'icono' => 'dangerous',
+                        'empresa' => $adjName,
+                        'disolucion_fecha' => $disolucionFecha,
+                        'dias_despues' => $diffDays,
+                        'importe_contrato' => $c['importe'] ?? null,
+                        'contrato_id' => $c['id'],
+                        'contrato_fecha' => $c['fecha'],
+                        'contrato_titulo' => mb_substr($c['titulo'], 0, 100),
+                        'departamento' => $c['departamento'] ?? '',
+                        'mensaje' => "{$adjName} disuelta el {$disolucionFecha} — {$diffDays} días después de adjudicación del {$c['fecha']}",
+                    ];
+                }
+            }
+        }
+
+        // ── Flag 5: Cambios de cargo ±60 días de adjudicación ───
+        foreach ($contratos as $c) {
+            $dtContrato = new DateTime($c['fecha']);
+            // Check nombramientos near award
+            foreach ($nombramientos as $n) {
+                $dtNom = new DateTime($n['fecha']);
+                $diffDays = (int)$dtContrato->diff($dtNom)->days;
+                if ($diffDays <= 60) {
+                    $alertas[] = [
+                        'tipo' => 'cambio_cargo',
+                        'nivel' => 'media',
+                        'icono' => 'swap_horiz',
+                        'empresa' => $adjName,
+                        'persona' => $n['nombre'],
+                        'cargo' => $n['cargo'],
+                        'accion' => 'Nombramiento',
+                        'fecha_cambio' => $n['fecha'],
+                        'dias_diferencia' => $diffDays,
+                        'importe_contrato' => $c['importe'] ?? null,
+                        'contrato_id' => $c['id'],
+                        'contrato_fecha' => $c['fecha'],
+                        'contrato_titulo' => mb_substr($c['titulo'], 0, 100),
+                        'departamento' => $c['departamento'] ?? '',
+                        'mensaje' => "Nombramiento de {$n['nombre']} como {$n['cargo']} en {$adjName} el {$n['fecha']} — {$diffDays} días del contrato ({$c['fecha']})",
+                    ];
+                }
+            }
+            // Check ceses near award
+            foreach ($ceses as $ce) {
+                $dtCese = new DateTime($ce['fecha']);
+                $diffDays = (int)$dtContrato->diff($dtCese)->days;
+                if ($diffDays <= 60) {
+                    $alertas[] = [
+                        'tipo' => 'cambio_cargo',
+                        'nivel' => 'media',
+                        'icono' => 'swap_horiz',
+                        'empresa' => $adjName,
+                        'persona' => $ce['nombre'],
+                        'cargo' => $ce['cargo'],
+                        'accion' => 'Cese/Dimisión',
+                        'fecha_cambio' => $ce['fecha'],
+                        'dias_diferencia' => $diffDays,
+                        'importe_contrato' => $c['importe'] ?? null,
+                        'contrato_id' => $c['id'],
+                        'contrato_fecha' => $c['fecha'],
+                        'contrato_titulo' => mb_substr($c['titulo'], 0, 100),
+                        'departamento' => $c['departamento'] ?? '',
+                        'mensaje' => "Cese de {$ce['nombre']} ({$ce['cargo']}) en {$adjName} el {$ce['fecha']} — {$diffDays} días del contrato ({$c['fecha']})",
+                    ];
+                }
+            }
+        }
+    }
+
+    // ── Flag 4: Multi-administrador (using normalized company names) ──
+    $multiAdmins = [];
+    foreach ($adminGlobal as $pName => $info) {
+        // Count unique normalized companies (avoids INDRA SISTEMAS S.A. vs SA)
+        $uniqueNorm = array_unique($info['empresas_norm'] ?? []);
+        if (count($uniqueNorm) >= 2) {
+            // Pick one canonical name per normalized form
+            $canonicalNames = [];
+            $normToFirst = [];
+            foreach ($info['empresas'] as $i => $empName) {
+                $nf = $info['empresas_norm'][$i] ?? $normEmpresa($empName);
+                if (!isset($normToFirst[$nf])) {
+                    $normToFirst[$nf] = $empName;
+                    $canonicalNames[] = $empName;
+                }
+            }
+
+            $multiAdmins[] = ['nombre' => $info['nombre'], 'empresas' => $canonicalNames];
+
+            // Build details: contracts per canonical company
+            $empresaContratos = [];
+            foreach ($canonicalNames as $empName) {
+                // Also include contracts under alternate name forms
+                $empNorm = $normEmpresa($empName);
+                $matchedContracts = [];
+                foreach ($byAdj as $adjKey => $cList) {
+                    if ($normEmpresa($adjKey) === $empNorm) {
+                        foreach ($cList as $c) {
+                            $matchedContracts[] = [
+                                'id' => $c['id'],
+                                'titulo' => mb_substr($c['titulo'], 0, 100),
+                                'importe' => $c['importe'] ?? null,
+                                'fecha' => $c['fecha'],
+                            ];
+                        }
+                    }
+                }
+                $empresaContratos[$empName] = $matchedContracts;
+            }
+
+            $totalImporte = 0;
+            foreach ($empresaContratos as $contrList) {
+                $totalImporte += array_sum(array_map(fn($c) => $c['importe'] ?? 0, $contrList));
+            }
+
+            $alertas[] = [
+                'tipo' => 'multi_admin',
+                'nivel' => count($canonicalNames) >= 3 ? 'alta' : 'media',
+                'icono' => 'group',
+                'persona' => $info['nombre'],
+                'num_empresas' => count($canonicalNames),
+                'empresas' => $canonicalNames,
+                'empresas_contratos' => $empresaContratos,
+                'importe_total' => round($totalImporte, 2),
+                'mensaje' => "{$info['nombre']} es administrador en " . count($canonicalNames) . " empresas adjudicatarias: " . implode(', ', array_slice($canonicalNames, 0, 3)) . (count($canonicalNames) > 3 ? '...' : ''),
+            ];
+        }
+    }
+
+    // ── Flag 6: Negociado sin publicidad (lowest transparency in BOE) ────
+    // Note: Contratos menores (<15K€ servicios / <40K€ obras) are NOT published in BOE.
+    $negociadosSinPub = [];
+    foreach ($lics as $l) {
+        $proc = mb_strtolower($l['procedimiento'] ?? '');
+        if (str_contains($proc, 'negociado sin publicidad')) {
+            $negociadosSinPub[] = [
+                'id' => $l['id'],
+                'titulo' => mb_substr($l['titulo'], 0, 120),
+                'importe' => $l['importe'] ?? null,
+                'fecha' => $l['fecha'],
+                'departamento' => $l['departamento'] ?? '',
+                'adjudicatario' => $l['adjudicatario'] ?? null,
+                'nif' => $l['nif_adjudicatario'] ?? null,
+            ];
+        }
+    }
+
+    // ── De-duplicate and sort alertas ────────────────────────────
+    // Sort: alta first, then by importe (biggest impact first)
+    usort($alertas, function ($a, $b) {
+        $niv = ['alta' => 0, 'media' => 1, 'baja' => 2];
+        $cmp = ($niv[$a['nivel']] ?? 9) <=> ($niv[$b['nivel']] ?? 9);
+        if ($cmp !== 0) return $cmp;
+        return ($b['importe_contrato'] ?? $b['importe_total'] ?? 0) <=> ($a['importe_contrato'] ?? $a['importe_total'] ?? 0);
+    });
+
+    // ── Summary stats ────────────────────────────────────────────
+    $countByTipo = [];
+    foreach ($alertas as $a) {
+        $countByTipo[$a['tipo']] = ($countByTipo[$a['tipo']] ?? 0) + 1;
+    }
+
+    return [
+        'total_licitaciones' => count($lics),
+        'total_con_adjudicatario' => count($conAdj),
+        'empresas_cruzadas_borme' => count($empresasData),
+        'total_alertas' => count($alertas),
+        'alertas_por_tipo' => $countByTipo,
+        'alertas' => array_slice($alertas, 0, 100), // cap at 100
+        'multi_administradores' => array_slice($multiAdmins, 0, 50),
+        'negociado_sin_publicidad' => [
+            'total' => count($negociadosSinPub),
+            'importe_total' => round(array_sum(array_map(fn($c) => $c['importe'] ?? 0, $negociadosSinPub)), 2),
+            'detalle' => array_slice($negociadosSinPub, 0, 50),
+        ],
+        'empresas_cruzadas' => array_slice($empresasData, 0, 30),
+        'nota_contratos_menores' => 'Los contratos menores no se publican en el BOE (umbral: <15.000€ servicios, <40.000€ obras). Solo están disponibles en los perfiles de contratante de cada organismo.',
+    ];
+}

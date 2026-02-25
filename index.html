@@ -311,6 +311,10 @@ async function loadAnalisisEmpresas(dias = 90) {
   return await api('analisis-empresas', { dias });
 }
 
+async function loadAlertasLicitaciones(dias = 90) {
+  return await api('alertas-licitaciones', { dias });
+}
+
 async function loadReferencias(params = {}) {
   referenciasData = await api('referencias', params);
   return referenciasData;
@@ -1018,6 +1022,76 @@ async function renderLicitaciones(container) {
       </div>
     </div>
 
+    <!-- ═══ RED FLAGS / ALERTAS BORME ═══ -->
+    <div id="lic-alertas-section" class="mb-8">
+      <div class="p-6 rounded-2xl bg-gradient-to-br from-red-500/5 via-amber-500/5 to-orange-500/5 border border-red-500/20 dark:border-red-500/10">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-2.5 rounded-xl bg-red-500/10"><span class="material-symbols-outlined text-red-500 text-2xl">policy</span></div>
+          <div>
+            <h3 class="text-lg font-black dark:text-white">Red Flags — Cruce BORME &times; Licitaciones</h3>
+            <p class="text-xs text-slate-500">Análisis automático cruzando datos del Registro Mercantil (BORME) con adjudicaciones del BOE (90 días)</p>
+          </div>
+        </div>
+
+        <!-- KPI summary -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5" id="rf-kpis">
+          <div class="skeleton h-20 rounded-xl"></div>
+          <div class="skeleton h-20 rounded-xl"></div>
+          <div class="skeleton h-20 rounded-xl"></div>
+          <div class="skeleton h-20 rounded-xl"></div>
+          <div class="skeleton h-20 rounded-xl"></div>
+          <div class="skeleton h-20 rounded-xl"></div>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="flex flex-wrap gap-2 mb-4" id="rf-tabs">
+          <button onclick="filterRedFlags('all')" id="rf-tab-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary text-white">Todas</button>
+          <button onclick="filterRedFlags('multi_admin')" id="rf-tab-multi_admin" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Multi-administrador</button>
+          <button onclick="filterRedFlags('capital_ridiculo')" id="rf-tab-capital_ridiculo" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Capital ridículo</button>
+          <button onclick="filterRedFlags('empresa_reciente')" id="rf-tab-empresa_reciente" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Empresa reciente</button>
+          <button onclick="filterRedFlags('disolucion_post')" id="rf-tab-disolucion_post" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Disolución post-adj.</button>
+          <button onclick="filterRedFlags('cambio_cargo')" id="rf-tab-cambio_cargo" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Cambios cargo</button>
+          <button onclick="filterRedFlags('negociado_sin_pub')" id="rf-tab-negociado_sin_pub" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Negociado s/pub</button>
+        </div>
+
+        <!-- Alertas list -->
+        <div id="rf-alertas-list" class="space-y-3">
+          <div class="skeleton h-16 rounded-lg"></div>
+          <div class="skeleton h-16 rounded-lg"></div>
+          <div class="skeleton h-16 rounded-lg"></div>
+        </div>
+
+        <!-- Multi-admin detail -->
+        <div id="rf-multi-admin-detail" class="mt-6 hidden">
+          <h4 class="font-bold dark:text-white mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-500">account_tree</span>
+            Multi-administradores — Red de empresas adjudicatarias
+          </h4>
+          <div id="rf-multi-admin-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Negociado sin publicidad detail -->
+        <div id="rf-negociado-detail" class="mt-6 hidden">
+          <h4 class="font-bold dark:text-white mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-orange-500">visibility_off</span>
+            Negociados sin publicidad
+          </h4>
+          <div class="text-xs text-slate-500 mb-3">Contratos adjudicados mediante procedimiento negociado sin publicidad — la menor transparencia disponible en el BOE. Los contratos menores (<15.000€ servicios / <40.000€ obras) no se publican en BOE.</div>
+          <div id="rf-negociado-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- BORME cross-ref empresas -->
+        <div id="rf-empresas-cruzadas" class="mt-6 hidden">
+          <h4 class="font-bold dark:text-white mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">hub</span>
+            Empresas cruzadas con BORME
+          </h4>
+          <div class="text-xs text-slate-500 mb-3">Empresas adjudicatarias encontradas en el Registro Mercantil (cargos, capital, actos societarios)</div>
+          <div id="rf-empresas-list" class="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Enhanced Filters -->
     <div class="mb-6 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -1096,13 +1170,15 @@ async function renderLicitaciones(container) {
   `;
 
   // Load data in parallel
-  const [gastoData, licData] = await Promise.all([
+  const [gastoData, licData, alertasData] = await Promise.all([
     loadResumenGasto('diario'),
-    loadLicitaciones({ por_pagina: 20 })
+    loadLicitaciones({ por_pagina: 20 }),
+    loadAlertasLicitaciones(90),
   ]);
 
   renderGastoCharts(gastoData);
   if (licData) renderLicitacionesTable('lic-table-container', licData);
+  renderRedFlags(alertasData);
 }
 
 function renderGastoCharts(data) {
@@ -1363,6 +1439,214 @@ function clearLicFilters() {
     if (el) el.value = '';
   });
   searchLicitaciones();
+}
+
+// ─── RED FLAGS RENDERING ──────────────────────────────────────
+
+let _redFlagsData = null;
+let _rfActiveFilter = 'all';
+
+function renderRedFlags(data) {
+  _redFlagsData = data;
+  const section = document.getElementById('lic-alertas-section');
+  if (!data || !section) return;
+
+  // KPI cards
+  const kpiDefs = [
+    { key: 'multi_admin', icon: 'group', color: 'amber', label: 'Multi-admin', val: data.alertas_por_tipo?.multi_admin || 0 },
+    { key: 'capital_ridiculo', icon: 'account_balance_wallet', color: 'red', label: 'Capital ridículo', val: data.alertas_por_tipo?.capital_ridiculo || 0 },
+    { key: 'empresa_reciente', icon: 'schedule', color: 'orange', label: 'Emp. reciente', val: data.alertas_por_tipo?.empresa_reciente || 0 },
+    { key: 'disolucion_post', icon: 'dangerous', color: 'red', label: 'Disolución post', val: data.alertas_por_tipo?.disolucion_post || 0 },
+    { key: 'cambio_cargo', icon: 'swap_horiz', color: 'purple', label: 'Cambio cargo', val: data.alertas_por_tipo?.cambio_cargo || 0 },
+    { key: 'negociado_sin_pub', icon: 'visibility_off', color: 'slate', label: 'Neg. s/pub', val: data.negociado_sin_publicidad?.total || 0 },
+  ];
+
+  document.getElementById('rf-kpis').innerHTML = kpiDefs.map(k => `
+    <button onclick="filterRedFlags('${k.key}')" class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-left hover:shadow-md transition-shadow cursor-pointer">
+      <div class="flex items-center gap-1.5 mb-1">
+        <span class="material-symbols-outlined text-${k.color}-500 text-base">${k.icon}</span>
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight">${k.label}</span>
+      </div>
+      <div class="text-lg font-black dark:text-white">${k.val}</div>
+    </button>
+  `).join('');
+
+  // Render alertas
+  _rfActiveFilter = 'all';
+  renderRedFlagsList();
+
+  // Render multi-admin detail
+  renderMultiAdminDetail(data.multi_administradores);
+
+  // Render negociado sin publicidad
+  renderNegociadoDetail(data.negociado_sin_publicidad);
+
+  // Render empresas cruzadas
+  renderEmpresasCruzadas(data.empresas_cruzadas);
+}
+
+function filterRedFlags(tipo) {
+  _rfActiveFilter = tipo;
+  // Update tab styles
+  document.querySelectorAll('#rf-tabs button').forEach(btn => {
+    btn.className = btn.id === `rf-tab-${tipo}`
+      ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-primary text-white'
+      : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+  });
+  renderRedFlagsList();
+
+  // Show/hide detail panels
+  const multiPanel = document.getElementById('rf-multi-admin-detail');
+  const negPanel = document.getElementById('rf-negociado-detail');
+  const empPanel = document.getElementById('rf-empresas-cruzadas');
+  if (multiPanel) multiPanel.classList.toggle('hidden', tipo !== 'multi_admin' && tipo !== 'all');
+  if (negPanel) negPanel.classList.toggle('hidden', tipo !== 'negociado_sin_pub');
+  if (empPanel) empPanel.classList.toggle('hidden', tipo !== 'all');
+}
+
+function renderRedFlagsList() {
+  const container = document.getElementById('rf-alertas-list');
+  if (!_redFlagsData || !container) return;
+
+  let alertas = _redFlagsData.alertas || [];
+  if (_rfActiveFilter !== 'all') {
+    alertas = alertas.filter(a => a.tipo === _rfActiveFilter);
+  }
+
+  if (!alertas.length && _rfActiveFilter !== 'negociado_sin_pub') {
+    container.innerHTML = '<p class="text-sm text-slate-500 py-4">No se detectaron alertas de este tipo en los últimos 90 días.</p>';
+    return;
+  }
+  if (_rfActiveFilter === 'negociado_sin_pub') {
+    container.innerHTML = '';
+    return;
+  }
+
+  const iconMap = {
+    multi_admin: { icon: 'group', color: 'amber' },
+    capital_ridiculo: { icon: 'account_balance_wallet', color: 'red' },
+    empresa_reciente: { icon: 'schedule', color: 'orange' },
+    disolucion_post: { icon: 'dangerous', color: 'red' },
+    cambio_cargo: { icon: 'swap_horiz', color: 'purple' },
+  };
+
+  container.innerHTML = alertas.slice(0, 50).map((a, idx) => {
+    const cfg = iconMap[a.tipo] || { icon: 'warning', color: 'slate' };
+    const bgNivel = a.nivel === 'alta' ? 'bg-red-500/10 border-red-500/20' : a.nivel === 'media' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-border-dark';
+    const textNivel = a.nivel === 'alta' ? 'text-red-500' : a.nivel === 'media' ? 'text-amber-500' : 'text-slate-500';
+
+    let extra = '';
+    if (a.tipo === 'capital_ridiculo' && a.capital != null && a.importe_contrato != null) {
+      const ratio = a.importe_contrato / Math.max(a.capital, 1);
+      extra = `<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-500">Capital: ${formatCurrency(a.capital)} → Contrato: ${formatCurrency(a.importe_contrato)} (×${ratio.toFixed(0)})</span>`;
+    } else if (a.tipo === 'empresa_reciente' && a.meses_antes != null) {
+      extra = `<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-500">Edad: ${a.meses_antes} meses al momento de la adjudicación</span>`;
+    } else if (a.tipo === 'multi_admin' && a.num_empresas) {
+      extra = `<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500">${a.num_empresas} empresas · ${formatCurrency(a.importe_total)}</span>`;
+    } else if (a.tipo === 'cambio_cargo' && a.dias_diferencia != null) {
+      extra = `<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-500">${a.accion || 'Cambio'} — ${Math.abs(a.dias_diferencia)} días de la adjudicación</span>`;
+    } else if (a.tipo === 'disolucion_post' && a.dias_despues != null) {
+      extra = `<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-500">Disolución ${a.dias_despues} días después de la adjudicación · ${formatCurrency(a.importe_contrato)}</span>`;
+    }
+
+    const empresaLabel = a.empresa ? `<span class="font-bold dark:text-white">${_escHtml(a.empresa)}</span>` : '';
+    const personaLabel = a.persona ? `<span class="text-xs text-slate-400">${_escHtml(a.persona)}</span>` : '';
+
+    return `<div class="flex items-start gap-3 p-3 rounded-lg border ${bgNivel} transition-colors">
+      <span class="material-symbols-outlined ${textNivel} mt-0.5">${cfg.icon}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-2">${empresaLabel} ${personaLabel}</div>
+        <p class="text-xs text-slate-500 mt-0.5">${_escHtml(a.mensaje)}</p>
+        ${extra}
+      </div>
+      <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${textNivel} ${bgNivel}">${a.nivel}</span>
+    </div>`;
+  }).join('');
+
+  if (alertas.length > 50) {
+    container.innerHTML += `<p class="text-xs text-slate-500 text-center mt-2">Mostrando 50 de ${alertas.length} alertas</p>`;
+  }
+}
+
+function renderMultiAdminDetail(admins) {
+  const panel = document.getElementById('rf-multi-admin-detail');
+  const list = document.getElementById('rf-multi-admin-list');
+  if (!panel || !list || !admins?.length) return;
+
+  panel.classList.remove('hidden');
+  list.innerHTML = admins.map(m => {
+    const empresaCards = m.empresas.map(emp => `
+      <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">${_escHtml(emp)}</span>
+    `).join(' ');
+    return `<div class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-amber-500 text-lg">person</span>
+        <span class="font-bold dark:text-white">${_escHtml(m.nombre)}</span>
+        <span class="text-xs text-slate-400">${m.empresas.length} empresas</span>
+      </div>
+      <div class="flex flex-wrap gap-1.5">${empresaCards}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderNegociadoDetail(neg) {
+  const panel = document.getElementById('rf-negociado-detail');
+  const list = document.getElementById('rf-negociado-list');
+  if (!panel || !list || !neg) return;
+
+  const header = `<div class="flex items-center gap-4 mb-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+    <div><span class="text-2xl font-black text-orange-500">${neg.total}</span><span class="text-xs text-slate-500 ml-1.5">contratos</span></div>
+    <div><span class="text-2xl font-black text-orange-500">${formatCurrency(neg.importe_total)}</span><span class="text-xs text-slate-500 ml-1.5">importe total</span></div>
+  </div>`;
+
+  const rows = (neg.detalle || []).map(c => `
+    <div class="flex items-center gap-3 p-2.5 rounded-lg bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-xs">
+      <span class="text-slate-400 w-16 shrink-0">${formatDate(c.fecha)}</span>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold dark:text-white truncate">${_escHtml(c.titulo)}</div>
+        <div class="text-slate-500 truncate">${_escHtml(c.departamento)}${c.adjudicatario ? ' → ' + _escHtml(c.adjudicatario) : ''}</div>
+      </div>
+      <span class="shrink-0 font-bold ${c.importe && c.importe > 200000 ? 'text-red-500' : 'dark:text-white'}">${c.importe ? formatCurrency(c.importe) : '—'}</span>
+    </div>
+  `).join('');
+
+  list.innerHTML = header + rows;
+}
+
+function renderEmpresasCruzadas(empresas) {
+  const panel = document.getElementById('rf-empresas-cruzadas');
+  const list = document.getElementById('rf-empresas-list');
+  if (!panel || !list || !empresas?.length) return;
+
+  panel.classList.remove('hidden');
+  list.innerHTML = empresas.map(e => {
+    const flags = [];
+    if (e.capital != null) flags.push(`<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 ${e.capital < 10000 ? 'text-red-500 font-bold' : 'text-slate-500'}">Capital: ${formatCurrency(e.capital)}</span>`);
+    if (e.fecha_constitucion) flags.push(`<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">Const: ${e.fecha_constitucion}</span>`);
+    if (e.disuelta) flags.push(`<span class="text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-500 font-bold">DISOLUCIÓN${e.disolucion_fecha ? ' ' + e.disolucion_fecha : ''}</span>`);
+    if (e.personas_activas) flags.push(`<span class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">${e.personas_activas} cargos</span>`);
+    if (e.total_contratos) flags.push(`<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500">${e.total_contratos} contratos · ${formatCurrency(e.importe_total)}</span>`);
+
+    const nombramientos = (e.nombramientos || []).slice(0, 3).map(p =>
+      `<div class="text-[10px] text-slate-500"><span class="text-emerald-500">+</span> ${_escHtml(p.nombre)} <span class="text-slate-400">(${p.cargo}, ${p.fecha})</span></div>`
+    ).join('');
+    const ceses = (e.ceses || []).slice(0, 3).map(p =>
+      `<div class="text-[10px] text-slate-500"><span class="text-red-400">-</span> ${_escHtml(p.nombre)} <span class="text-slate-400">(${p.cargo}, ${p.fecha})</span></div>`
+    ).join('');
+
+    return `<div class="p-3 rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark">
+      <div class="font-bold text-sm dark:text-white mb-1.5 truncate" title="${_escHtml(e.borme_empresa || '')}">${_escHtml(e.adjudicatario)}</div>
+      <div class="flex flex-wrap gap-1 mb-2">${flags.join('')}</div>
+      ${nombramientos || ceses ? '<div class="border-t border-slate-100 dark:border-border-dark pt-2 mt-2 space-y-0.5">' + nombramientos + ceses + '</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function _escHtml(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
 
 function renderLicitacionesTable(containerId, data) {

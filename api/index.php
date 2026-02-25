@@ -66,6 +66,9 @@ try {
         case 'analisis-empresas':
             handle_analisis_empresas();
             break;
+        case 'alertas-licitaciones':
+            handle_alertas_licitaciones();
+            break;
         case 'subvenciones':
             handle_subvenciones();
             break;
@@ -423,6 +426,19 @@ function handle_analisis_empresas() {
     
     $result = analizar_empresas($dias);
     
+    cache_set($cacheKey, $result, 3600);
+    json_response($result);
+}
+
+function handle_alertas_licitaciones() {
+    $dias = min(365, max(7, (int)($_GET['dias'] ?? 90)));
+
+    $cacheKey = "alertas_licitaciones_{$dias}_" . date('Y-m-d');
+    $cached = cache_get($cacheKey);
+    if ($cached) { json_response($cached); return; }
+
+    $result = analizar_alertas_licitaciones($dias);
+
     cache_set($cacheKey, $result, 3600);
     json_response($result);
 }
