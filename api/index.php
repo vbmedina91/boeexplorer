@@ -109,15 +109,23 @@ try {
 function handle_status() {
     $meta = load_meta();
     
+    // Include cron health data if available
+    $cronHealth = null;
+    $healthFile = __DIR__ . '/data/cron_health.json';
+    if (file_exists($healthFile)) {
+        $cronHealth = json_decode(file_get_contents($healthFile), true);
+    }
+    
     json_response([
         'status' => 'online',
-        'version' => '2.1.0',
+        'version' => '2.2.0',
         'last_update' => $meta['last_update'],
         'total_documentos' => $meta['total_documents'],
         'total_dias_almacenados' => $meta['total_days'],
         'fecha_inicio' => $meta['first_date'],
         'fecha_fin' => $meta['last_date'],
         'php_version' => PHP_VERSION,
+        'cron' => $cronHealth,
     ]);
 }
 

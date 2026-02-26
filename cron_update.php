@@ -4,8 +4,9 @@
  * BOE Explorer - Daily Cron Update Script
  * 
  * Fetches today's BOE data and stores it permanently.
- * Should be run daily at 20:00 via cron:
- *   0 20 * * * /usr/bin/php /home/pro-eurtec/domains/test.pro-eurtec.com/public_html/cron_update.php >> /home/pro-eurtec/domains/test.pro-eurtec.com/public_html/api/data/cron.log 2>&1
+ * Runs twice daily via cron:
+ *   30 8  * * 1-5  (morning, weekdays - BOE publishes ~7:30 AM)
+ *   0  17 * * *    (evening, safety net - catches any gaps)
  * 
  * Usage:
  *   php cron_update.php              # Fetch today
@@ -20,12 +21,27 @@ if (php_sapi_name() !== 'cli') {
     die('CLI only');
 }
 
+// === LOCKFILE: prevent concurrent executions ===
+$lockFile = __DIR__ . '/api/data/cron.lock';
+if (file_exists($lockFile)) {
+    $lockAge = time() - filemtime($lockFile);
+    if ($lockAge < 600) { // 10 min max 
+        echo "[" . date('Y-m-d H:i:s') . "] Another cron instance running (lock age: {$lockAge}s), aborting.\n";
+        exit(0);
+    }
+    // Stale lock (>10 min) — remove it
+    echo "[" . date('Y-m-d H:i:s') . "] Removing stale lock (age: {$lockAge}s)\n";
+    @unlink($lockFile);
+}
+file_put_contents($lockFile, date('Y-m-d H:i:s') . " PID=" . getmypid());
+register_shutdown_function(function() use ($lockFile) { @unlink($lockFile); });
+
 require_once __DIR__ . '/api/boe_parser.php';
 require_once __DIR__ . '/api/data_store.php';
 require_once __DIR__ . '/api/bdns_parser.php';
 require_once __DIR__ . '/api/borme_parser.php';
 
-set_time_limit(300);
+set_time_limit(600);
 
 $startTime = microtime(true);
 echo "[" . date('Y-m-d H:i:s') . "] BOE Explorer - Daily Update\n";
@@ -91,11 +107,16 @@ if ($mode === '--week') {
 } else {
     // Today (default)
     $dates = [date('Y-m-d')];
-    // Also check yesterday if not stored (in case cron ran late)
-    $yesterday = date('Y-m-d', strtotime('-1 day'));
-    $dtYesterday = new DateTime($yesterday);
-    if ((int)$dtYesterday->format('N') < 6 && !is_dia_stored($yesterday)) {
-        array_unshift($dates, $yesterday);
+    // Check last 3 business days for gaps (catches missed Friday on Monday, etc.)
+    $businessDaysChecked = 0;
+    for ($back = 1; $back <= 5 && $businessDaysChecked < 3; $back++) {
+        $prevDate = date('Y-m-d', strtotime("-{$back} day"));
+        $dtPrev = new DateTime($prevDate);
+        if ((int)$dtPrev->format('N') >= 6) continue; // skip weekends
+        $businessDaysChecked++;
+        if (!is_dia_stored($prevDate)) {
+            array_unshift($dates, $prevDate);
+        }
     }
 }
 
@@ -119,39 +140,67 @@ foreach ($dates as $fecha) {
     
     echo "  [$fecha] Fetching... ";
     
-    try {
-        // Clear any cached data for this date to force fresh fetch
-        $cacheKey = "boe_dia_$fecha";
-        $cacheFile = CACHE_DIR . '/' . md5($cacheKey) . '.json';
-        if (file_exists($cacheFile)) @unlink($cacheFile);
-        
-        $docs = fetch_boe_dia($fecha);
-        
-        if ($docs === null || $docs === false) {
-            echo "FAILED (null response)\n";
-            $errors++;
-            continue;
+    $maxRetries = 3;
+    $retryDelay = [5, 15, 30]; // seconds between retries
+    $fetchOk = false;
+    
+    for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+        try {
+            // Clear any cached data for this date to force fresh fetch
+            $cacheKey = "boe_dia_$fecha";
+            $cacheFile = CACHE_DIR . '/' . md5($cacheKey) . '.json';
+            if (file_exists($cacheFile)) @unlink($cacheFile);
+            
+            $docs = fetch_boe_dia($fecha);
+            
+            if ($docs === null || $docs === false) {
+                throw new RuntimeException("null response from BOE API");
+            }
+            
+            if (empty($docs) && (int)(new DateTime($fecha))->format('N') < 6) {
+                // Weekday but 0 docs — BOE might not be published yet (early morning)
+                // Only retry if it's today and before 9:00
+                $isToday = ($fecha === date('Y-m-d'));
+                $hour = (int)date('H');
+                if ($isToday && $hour < 9 && $attempt < $maxRetries) {
+                    echo "EMPTY (BOE not yet published, retry $attempt/$maxRetries in {$retryDelay[$attempt-1]}s)... ";
+                    sleep($retryDelay[$attempt - 1]);
+                    continue;
+                }
+                // After 9:00 or not today — accept 0 docs (could be holiday)
+            }
+            
+            $count = count($docs);
+            
+            // Enrich V-A (licitaciones) with detail data (importe, empresa, etc.)
+            $licCount = count(array_filter($docs, fn($d) => ($d['seccion'] ?? '') === 'V-A'));
+            if ($licCount > 0) {
+                echo "($count docs, $licCount licitaciones) enriching... ";
+                enrich_licitaciones($docs, true);
+                echo " → ";
+            }
+            
+            store_boe_dia($fecha, $docs);
+            
+            echo "OK ($count documentos)";
+            if ($attempt > 1) echo " [retry $attempt]";
+            echo "\n";
+            $totalFetched++;
+            $totalDocs += $count;
+            $fetchOk = true;
+            break;
+            
+        } catch (Throwable $e) {
+            echo "ERROR (attempt $attempt/$maxRetries): " . $e->getMessage();
+            if ($attempt < $maxRetries) {
+                $delay = $retryDelay[$attempt - 1];
+                echo " — retrying in {$delay}s... ";
+                sleep($delay);
+            } else {
+                echo " — GIVING UP\n";
+                $errors++;
+            }
         }
-        
-        $count = count($docs);
-        
-        // Enrich V-A (licitaciones) with detail data (importe, empresa, etc.)
-        $licCount = count(array_filter($docs, fn($d) => ($d['seccion'] ?? '') === 'V-A'));
-        if ($licCount > 0) {
-            echo "($count docs, $licCount licitaciones) enriching... ";
-            enrich_licitaciones($docs, true);
-            echo " → ";
-        }
-        
-        store_boe_dia($fecha, $docs);
-        
-        echo "OK ($count documentos)\n";
-        $totalFetched++;
-        $totalDocs += $count;
-        
-    } catch (Throwable $e) {
-        echo "ERROR: " . $e->getMessage() . "\n";
-        $errors++;
     }
     
     // Rate limit: 1 second between requests
@@ -174,22 +223,45 @@ echo "\n";
 
 // === BDNS Subvenciones Update ===
 echo "\n[" . date('Y-m-d H:i:s') . "] BDNS Subvenciones Update\n";
-$bdnsOk = bdns_daily_update(true);
+$bdnsOk = false;
+for ($r = 1; $r <= 2; $r++) {
+    $bdnsOk = bdns_daily_update(true);
+    if ($bdnsOk) break;
+    echo "  [BDNS] Attempt $r failed, " . ($r < 2 ? "retrying in 10s...\n" : "giving up\n");
+    if ($r < 2) sleep(10);
+}
 if (!$bdnsOk) {
-    echo "  [BDNS] WARNING: Update failed, will retry next run\n";
+    echo "  [BDNS] WARNING: Update failed after 2 attempts\n";
+    $errors++;
 }
 
 // === BORME Socios Update ===
 echo "\n[" . date('Y-m-d H:i:s') . "] BORME Actos Mercantiles Update\n";
-$bormeCount = borme_daily_update(true);
+$bormeCount = 0;
+for ($r = 1; $r <= 2; $r++) {
+    try {
+        $bormeCount = borme_daily_update(true);
+        break;
+    } catch (Throwable $e) {
+        echo "  [BORME] Attempt $r failed: " . $e->getMessage() . "\n";
+        if ($r < 2) sleep(10);
+    }
+}
 echo "  [BORME] $bormeCount new entries processed\n";
 
 // === Congreso Update ===
 require_once __DIR__ . '/api/congreso_parser.php';
 echo "\n[" . date('Y-m-d H:i:s') . "] Congreso de los Diputados Update\n";
-$congresoOk = congreso_daily_update(true);
+$congresoOk = false;
+for ($r = 1; $r <= 2; $r++) {
+    $congresoOk = congreso_daily_update(true);
+    if ($congresoOk) break;
+    echo "  [Congreso] Attempt $r failed, " . ($r < 2 ? "retrying in 10s...\n" : "giving up\n");
+    if ($r < 2) sleep(10);
+}
 if (!$congresoOk) {
-    echo "  [Congreso] WARNING: Update failed, will retry next run\n";
+    echo "  [Congreso] WARNING: Update failed after 2 attempts\n";
+    $errors++;
 }
 
 // === Clear API caches (force fresh data for all endpoints) ===
@@ -203,5 +275,17 @@ if (is_dir($cacheDir)) {
     }
     echo "\n[" . date('Y-m-d H:i:s') . "] Cleared $cleared API cache files\n";
 }
+
+// === Write health status file for monitoring ===
+$healthData = [
+    'last_run' => date('Y-m-d H:i:s'),
+    'status' => $errors === 0 ? 'ok' : 'warning',
+    'errors' => $errors,
+    'docs_fetched' => $totalDocs,
+    'days_fetched' => $totalFetched,
+    'elapsed_seconds' => round(microtime(true) - $startTime, 2),
+    'php_version' => PHP_VERSION,
+];
+file_put_contents(__DIR__ . '/api/data/cron_health.json', json_encode($healthData, JSON_PRETTY_PRINT));
 
 echo str_repeat('=', 60) . "\n";
