@@ -138,8 +138,18 @@ function handle_dashboard() {
     // Trend from meta (fast)
     $tendencia = get_tendencia_from_meta(30);
     
-    $hoy = date('Y-m-d');
-    $ayer = date('Y-m-d', strtotime('-1 day'));
+    // Use the most recent date that actually has data (BOE may not publish
+    // on weekends/holidays, and today's edition isn't available until 17:00)
+    $fechasDisponibles = [];
+    foreach ($documentos as $d) {
+        $f = $d['fecha'] ?? '';
+        if ($f) $fechasDisponibles[$f] = true;
+    }
+    krsort($fechasDisponibles);
+    $fechasOrdenadas = array_keys($fechasDisponibles);
+    
+    $hoy   = $fechasOrdenadas[0] ?? date('Y-m-d');
+    $ayer  = $fechasOrdenadas[1] ?? date('Y-m-d', strtotime('-1 day'));
     $hace7 = date('Y-m-d', strtotime('-7 days'));
     $hace30 = date('Y-m-d', strtotime('-30 days'));
     
@@ -185,6 +195,7 @@ function handle_dashboard() {
     
     $result = [
         'publicaciones_hoy' => $pubsHoy,
+        'fecha_publicaciones' => $hoy,
         'publicaciones_semana' => $pubsSemana,
         'publicaciones_mes' => $pubsMes,
         'variacion_publicaciones' => $variacion,

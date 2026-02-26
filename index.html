@@ -526,7 +526,7 @@ async function renderInicio(container) {
         </div>
         <div class="flex gap-4 w-full lg:w-auto" id="hero-stats">
           <div class="flex-1 lg:w-48 p-6 rounded-2xl glass-card border-l-4 border-primary shadow-xl">
-            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Publicaciones Hoy</p>
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1" id="stat-pubs-label">Publicaciones Hoy</p>
             <div class="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight" id="stat-pubs-hoy">—</div>
             <div class="flex items-center gap-1 text-xs font-bold" id="stat-pubs-var">
               <span class="material-symbols-outlined !text-sm">trending_flat</span> Cargando...
@@ -602,10 +602,20 @@ async function renderInicio(container) {
 
   // Update hero stats
   document.getElementById('stat-pubs-hoy').textContent = data.publicaciones_hoy || 0;
+  // Show actual date if not today (BOE may not be published yet or on weekends)
+  if (data.fecha_publicaciones) {
+    const fp = data.fecha_publicaciones;
+    const hoy = new Date().toISOString().slice(0,10);
+    const lbl = document.getElementById('stat-pubs-label');
+    if (lbl && fp !== hoy) {
+      const parts = fp.split('-');
+      lbl.textContent = `Último BOE (${parts[2]}/${parts[1]})`;
+    }
+  }
   const varEl = document.getElementById('stat-pubs-var');
   const v = data.variacion_publicaciones || 0;
   varEl.className = `flex items-center gap-1 text-xs font-bold ${v >= 0 ? 'text-emerald-500' : 'text-red-400'}`;
-  varEl.innerHTML = `<span class="material-symbols-outlined !text-sm">${v >= 0 ? 'trending_up' : 'trending_down'}</span> ${v >= 0 ? '+' : ''}${v}% vs ayer`;
+  varEl.innerHTML = `<span class="material-symbols-outlined !text-sm">${v >= 0 ? 'trending_up' : 'trending_down'}</span> ${v >= 0 ? '+' : ''}${v}% vs anterior`;
 
   document.getElementById('stat-lics').textContent = data.licitaciones_activas || 0;
   const licsInfoEl = document.getElementById('stat-lics-info');
@@ -732,7 +742,7 @@ async function renderDashboard(container) {
     <!-- KPI Cards Row 2: Hoy / Semana / Mes -->
     <div class="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
       <div class="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
-        <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">Docs Hoy</p>
+        <p class="text-[10px] font-bold text-blue-400 uppercase mb-1" id="kpi-docs-hoy-label">Docs Hoy</p>
         <div class="text-lg font-black dark:text-white" id="kpi-docs-hoy">—</div>
         <p class="text-[10px] text-slate-500" id="kpi-docs-hoy-var"></p>
       </div>
@@ -747,7 +757,7 @@ async function renderDashboard(container) {
         <p class="text-[10px] text-slate-500">Últimos 30 días</p>
       </div>
       <div class="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-        <p class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Licit. Hoy</p>
+        <p class="text-[10px] font-bold text-emerald-400 uppercase mb-1" id="kpi-lics-hoy-label">Licit. Hoy</p>
         <div class="text-lg font-black dark:text-white" id="kpi-lics-hoy">—</div>
       </div>
       <div class="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
@@ -803,9 +813,22 @@ async function renderDashboard(container) {
 
   // Weekly/Monthly KPIs
   document.getElementById('kpi-docs-hoy').textContent = formatNumber(data.publicaciones_hoy);
+  // Update "Hoy" labels with actual date when BOE isn't from today
+  if (data.fecha_publicaciones) {
+    const fp2 = data.fecha_publicaciones;
+    const hoy2 = new Date().toISOString().slice(0,10);
+    if (fp2 !== hoy2) {
+      const p = fp2.split('-');
+      const dateStr = `${p[2]}/${p[1]}`;
+      const lbl1 = document.getElementById('kpi-docs-hoy-label');
+      const lbl2 = document.getElementById('kpi-lics-hoy-label');
+      if (lbl1) lbl1.textContent = `Docs ${dateStr}`;
+      if (lbl2) lbl2.textContent = `Licit. ${dateStr}`;
+    }
+  }
   const varEl = document.getElementById('kpi-docs-hoy-var');
-  if (data.variacion_publicaciones > 0) varEl.innerHTML = `<span class="text-emerald-500">+${data.variacion_publicaciones}%</span> vs ayer`;
-  else if (data.variacion_publicaciones < 0) varEl.innerHTML = `<span class="text-red-500">${data.variacion_publicaciones}%</span> vs ayer`;
+  if (data.variacion_publicaciones > 0) varEl.innerHTML = `<span class="text-emerald-500">+${data.variacion_publicaciones}%</span> vs anterior`;
+  else if (data.variacion_publicaciones < 0) varEl.innerHTML = `<span class="text-red-500">${data.variacion_publicaciones}%</span> vs anterior`;
   else varEl.textContent = 'Sin variación';
   document.getElementById('kpi-docs-semana').textContent = formatNumber(data.publicaciones_semana || 0);
   document.getElementById('kpi-docs-mes').textContent = formatNumber(data.publicaciones_mes || 0);
